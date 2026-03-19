@@ -316,6 +316,76 @@ set
   decision_note = excluded.decision_note,
   decided_at = excluded.decided_at;
 
+insert into public.documents (
+  organization_id,
+  seed_key,
+  entity_type,
+  entity_id,
+  category,
+  file_name,
+  storage_path,
+  mime_type,
+  size_bytes,
+  status,
+  visibility,
+  uploaded_by_name
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'document-employee-anika-offer-letter',
+    'employee',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-anika-raman'),
+    'Offer Letter',
+    'anika-raman-offer-letter.pdf',
+    'documents/employees/anika-raman/offer-letter.pdf',
+    'application/pdf',
+    248231,
+    'Active',
+    'Private',
+    'Maya Chen'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'document-employee-jordan-tax-form',
+    'employee',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-jordan-blake'),
+    'Tax Form',
+    'jordan-blake-w4.pdf',
+    'documents/employees/jordan-blake/w4.pdf',
+    'application/pdf',
+    126540,
+    'Active',
+    'Private',
+    'Maya Chen'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'document-company-payroll-policy',
+    'company',
+    '11111111-1111-1111-1111-111111111111',
+    'Policy',
+    'northstar-payroll-policy.pdf',
+    'documents/company/payroll-policy.pdf',
+    'application/pdf',
+    331008,
+    'Active',
+    'Internal',
+    'Maya Chen'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  entity_type = excluded.entity_type,
+  entity_id = excluded.entity_id,
+  category = excluded.category,
+  file_name = excluded.file_name,
+  storage_path = excluded.storage_path,
+  mime_type = excluded.mime_type,
+  size_bytes = excluded.size_bytes,
+  status = excluded.status,
+  visibility = excluded.visibility,
+  uploaded_by_name = excluded.uploaded_by_name;
+
 insert into public.announcements (
   organization_id,
   seed_key,

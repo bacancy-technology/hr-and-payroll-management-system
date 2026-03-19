@@ -137,6 +137,23 @@ create table if not exists public.approvals (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.documents (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  entity_type text not null,
+  entity_id uuid not null,
+  category text not null,
+  file_name text not null,
+  storage_path text not null,
+  mime_type text not null,
+  size_bytes integer not null check (size_bytes >= 0),
+  status text not null default 'Active',
+  visibility text not null default 'Private',
+  uploaded_by_name text not null,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.announcements (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -246,6 +263,11 @@ alter table public.approvals alter column seed_key set not null;
 alter table public.approvals add column if not exists decision_note text;
 alter table public.approvals add column if not exists decided_at timestamptz;
 
+alter table public.documents add column if not exists seed_key text;
+update public.documents set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.documents alter column seed_key set default gen_random_uuid()::text;
+alter table public.documents alter column seed_key set not null;
+
 alter table public.announcements add column if not exists seed_key text;
 update public.announcements set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.announcements alter column seed_key set default gen_random_uuid()::text;
@@ -262,6 +284,8 @@ create index if not exists time_entries_employee_id_idx on public.time_entries (
 create index if not exists leave_requests_organization_id_idx on public.leave_requests (organization_id);
 create index if not exists approvals_organization_id_idx on public.approvals (organization_id);
 create index if not exists approvals_entity_idx on public.approvals (entity_type, entity_id);
+create index if not exists documents_organization_id_idx on public.documents (organization_id);
+create index if not exists documents_entity_idx on public.documents (entity_type, entity_id);
 create index if not exists announcements_organization_id_idx on public.announcements (organization_id);
 create index if not exists profiles_organization_id_idx on public.profiles (organization_id);
 
@@ -287,6 +311,8 @@ create unique index if not exists leave_requests_organization_seed_key_idx
   on public.leave_requests (organization_id, seed_key);
 create unique index if not exists approvals_organization_seed_key_idx
   on public.approvals (organization_id, seed_key);
+create unique index if not exists documents_organization_seed_key_idx
+  on public.documents (organization_id, seed_key);
 create unique index if not exists announcements_organization_seed_key_idx
   on public.announcements (organization_id, seed_key);
 
@@ -311,6 +337,7 @@ alter table public.pay_periods enable row level security;
 alter table public.time_entries enable row level security;
 alter table public.leave_requests enable row level security;
 alter table public.approvals enable row level security;
+alter table public.documents enable row level security;
 alter table public.announcements enable row level security;
 alter table public.organizations enable row level security;
 
@@ -572,6 +599,35 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete approvals in their organization" on public.approvals;
 create policy "users can delete approvals in their organization"
 on public.approvals
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read documents in their organization" on public.documents;
+create policy "users can read documents in their organization"
+on public.documents
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert documents in their organization" on public.documents;
+create policy "users can insert documents in their organization"
+on public.documents
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update documents in their organization" on public.documents;
+create policy "users can update documents in their organization"
+on public.documents
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete documents in their organization" on public.documents;
+create policy "users can delete documents in their organization"
+on public.documents
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

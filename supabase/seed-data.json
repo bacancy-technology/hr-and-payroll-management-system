@@ -285,6 +285,44 @@
       "decisionNote": "Waiting for payroll close timing confirmation."
     }
   ],
+  "documents": [
+    {
+      "seedKey": "document-employee-anika-offer-letter",
+      "entityType": "employee",
+      "entityName": "Anika Raman",
+      "category": "Offer Letter",
+      "fileName": "anika-raman-offer-letter.pdf",
+      "storagePath": "documents/employees/anika-raman/offer-letter.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 248231,
+      "status": "Active",
+      "visibility": "Private"
+    },
+    {
+      "seedKey": "document-employee-jordan-tax-form",
+      "entityType": "employee",
+      "entityName": "Jordan Blake",
+      "category": "Tax Form",
+      "fileName": "jordan-blake-w4.pdf",
+      "storagePath": "documents/employees/jordan-blake/w4.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 126540,
+      "status": "Active",
+      "visibility": "Private"
+    },
+    {
+      "seedKey": "document-company-payroll-policy",
+      "entityType": "company",
+      "entityName": "Northstar People Ops",
+      "category": "Policy",
+      "fileName": "northstar-payroll-policy.pdf",
+      "storagePath": "documents/company/payroll-policy.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 331008,
+      "status": "Active",
+      "visibility": "Internal"
+    }
+  ],
   "announcements": [
     {
       "seedKey": "announcement-q2-review",

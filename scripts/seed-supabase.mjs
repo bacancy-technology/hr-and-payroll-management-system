@@ -356,6 +356,32 @@ async function main() {
     throw new Error(`Failed to seed approvals: ${approvalsError.message}`);
   }
 
+  const documents = seedData.documents.map((document) => ({
+    organization_id: organizationId,
+    seed_key: document.seedKey,
+    entity_type: document.entityType,
+    entity_id:
+      document.entityType === "company"
+        ? organizationId
+        : employeeIdBySeedKey.get(employeeIdByName.get(document.entityName)) ?? null,
+    category: document.category,
+    file_name: document.fileName,
+    storage_path: document.storagePath,
+    mime_type: document.mimeType,
+    size_bytes: document.sizeBytes,
+    status: document.status,
+    visibility: document.visibility,
+    uploaded_by_name: "Maya Chen",
+  }));
+
+  const { error: documentsError } = await supabase.from("documents").upsert(documents, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (documentsError) {
+    throw new Error(`Failed to seed documents: ${documentsError.message}`);
+  }
+
   console.log(`Seeded organization ${organizationId}`);
   console.log(`Departments: ${departments.length}`);
   console.log(`Employees: ${employees.length}`);
@@ -365,6 +391,7 @@ async function main() {
   console.log(`Time entries: ${timeEntries.length}`);
   console.log(`Leave requests: ${leaveRequests.length}`);
   console.log(`Approvals: ${approvals.length}`);
+  console.log(`Documents: ${documents.length}`);
   console.log(`Announcements: ${announcements.length}`);
 }
 

@@ -108,6 +108,18 @@ create table if not exists public.pay_periods (
   check (end_date >= start_date)
 );
 
+create table if not exists public.holidays (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  name text not null,
+  holiday_date date not null,
+  type text not null,
+  applies_to text not null,
+  status text not null default 'Scheduled',
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.time_entries (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -393,6 +405,11 @@ update public.pay_periods set seed_key = gen_random_uuid()::text where seed_key 
 alter table public.pay_periods alter column seed_key set default gen_random_uuid()::text;
 alter table public.pay_periods alter column seed_key set not null;
 
+alter table public.holidays add column if not exists seed_key text;
+update public.holidays set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.holidays alter column seed_key set default gen_random_uuid()::text;
+alter table public.holidays alter column seed_key set not null;
+
 alter table public.time_entries add column if not exists seed_key text;
 update public.time_entries set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.time_entries alter column seed_key set default gen_random_uuid()::text;
@@ -533,6 +550,7 @@ create index if not exists payroll_runs_organization_id_idx on public.payroll_ru
 create index if not exists payroll_items_organization_id_idx on public.payroll_items (organization_id);
 create index if not exists payroll_items_payroll_run_id_idx on public.payroll_items (payroll_run_id);
 create index if not exists pay_periods_organization_id_idx on public.pay_periods (organization_id);
+create index if not exists holidays_organization_id_idx on public.holidays (organization_id);
 create index if not exists time_entries_organization_id_idx on public.time_entries (organization_id);
 create index if not exists time_entries_employee_id_idx on public.time_entries (employee_id);
 create index if not exists leave_requests_organization_id_idx on public.leave_requests (organization_id);
@@ -579,6 +597,8 @@ create unique index if not exists payroll_items_run_employee_idx
   on public.payroll_items (payroll_run_id, employee_id);
 create unique index if not exists pay_periods_organization_seed_key_idx
   on public.pay_periods (organization_id, seed_key);
+create unique index if not exists holidays_organization_seed_key_idx
+  on public.holidays (organization_id, seed_key);
 create unique index if not exists time_entries_organization_seed_key_idx
   on public.time_entries (organization_id, seed_key);
 create unique index if not exists leave_requests_organization_seed_key_idx
@@ -628,6 +648,7 @@ alter table public.contractors enable row level security;
 alter table public.payroll_runs enable row level security;
 alter table public.payroll_items enable row level security;
 alter table public.pay_periods enable row level security;
+alter table public.holidays enable row level security;
 alter table public.time_entries enable row level security;
 alter table public.leave_requests enable row level security;
 alter table public.expenses enable row level security;
@@ -843,6 +864,35 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete pay periods in their organization" on public.pay_periods;
 create policy "users can delete pay periods in their organization"
 on public.pay_periods
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read holidays in their organization" on public.holidays;
+create policy "users can read holidays in their organization"
+on public.holidays
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert holidays in their organization" on public.holidays;
+create policy "users can insert holidays in their organization"
+on public.holidays
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update holidays in their organization" on public.holidays;
+create policy "users can update holidays in their organization"
+on public.holidays
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete holidays in their organization" on public.holidays;
+create policy "users can delete holidays in their organization"
+on public.holidays
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

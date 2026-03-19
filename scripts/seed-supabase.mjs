@@ -170,6 +170,16 @@ async function main() {
     status: period.status,
   }));
 
+  const holidays = (seedData.holidays ?? []).map((holiday) => ({
+    organization_id: organizationId,
+    seed_key: holiday.seedKey,
+    name: holiday.name,
+    holiday_date: holiday.holidayDate,
+    type: holiday.type,
+    applies_to: holiday.appliesTo,
+    status: holiday.status,
+  }));
+
   const employeeIdByName = new Map(
     seedData.employees.map((employee) => [employee.fullName, employee.seedKey]),
   );
@@ -251,7 +261,7 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: expensesError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
+  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
     await Promise.all([
       supabase.from("employees").upsert(employees, {
         onConflict: "organization_id,seed_key",
@@ -263,6 +273,9 @@ async function main() {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("pay_periods").upsert(payPeriods, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("holidays").upsert(holidays, {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("leave_requests").upsert(leaveRequests, {
@@ -296,6 +309,10 @@ async function main() {
 
   if (payPeriodsError) {
     throw new Error(`Failed to seed pay periods: ${payPeriodsError.message}`);
+  }
+
+  if (holidaysError) {
+    throw new Error(`Failed to seed holidays: ${holidaysError.message}`);
   }
 
   if (leaveError) {
@@ -676,6 +693,7 @@ async function main() {
   console.log(`Payroll runs: ${payrollRuns.length}`);
   console.log(`Payroll items: ${payrollItems.length}`);
   console.log(`Pay periods: ${payPeriods.length}`);
+  console.log(`Holidays: ${holidays.length}`);
   console.log(`Time entries: ${timeEntries.length}`);
   console.log(`Leave requests: ${leaveRequests.length}`);
   console.log(`Expenses: ${expenses.length}`);

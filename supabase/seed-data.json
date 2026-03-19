@@ -218,6 +218,24 @@
       "status": "Scheduled"
     }
   ],
+  "holidays": [
+    {
+      "seedKey": "holiday-holi-2026",
+      "name": "Holi",
+      "holidayDate": "2026-03-14",
+      "type": "Public Holiday",
+      "appliesTo": "India",
+      "status": "Observed"
+    },
+    {
+      "seedKey": "holiday-company-offsite-recovery",
+      "name": "Company Offsite Recovery Day",
+      "holidayDate": "2026-03-30",
+      "type": "Company Holiday",
+      "appliesTo": "Global",
+      "status": "Scheduled"
+    }
+  ],
   "timeEntries": [
     {
       "seedKey": "time-entry-anika-2026-03-18",

@@ -233,6 +233,42 @@ set
   pay_date = excluded.pay_date,
   status = excluded.status;
 
+insert into public.holidays (
+  organization_id,
+  seed_key,
+  name,
+  holiday_date,
+  type,
+  applies_to,
+  status
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'holiday-holi-2026',
+    'Holi',
+    '2026-03-14',
+    'Public Holiday',
+    'India',
+    'Observed'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'holiday-company-offsite-recovery',
+    'Company Offsite Recovery Day',
+    '2026-03-30',
+    'Company Holiday',
+    'Global',
+    'Scheduled'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  name = excluded.name,
+  holiday_date = excluded.holiday_date,
+  type = excluded.type,
+  applies_to = excluded.applies_to,
+  status = excluded.status;
+
 insert into public.time_entries (
   organization_id,
   seed_key,

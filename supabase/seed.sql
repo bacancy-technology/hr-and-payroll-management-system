@@ -593,6 +593,138 @@ set
   amount = excluded.amount,
   notes = excluded.notes;
 
+insert into public.workers_comp_policies (
+  organization_id,
+  seed_key,
+  policy_name,
+  carrier_name,
+  policy_number,
+  coverage_start_date,
+  coverage_end_date,
+  status,
+  states_covered,
+  premium_amount,
+  contact_name,
+  contact_email,
+  notes
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'workers-comp-policy-us-2026',
+    'US General Workers Compensation 2026',
+    'Shield Mutual',
+    'WC-US-2026-0019',
+    '2026-01-01',
+    '2026-12-31',
+    'Active',
+    '["California", "New York", "Texas"]'::jsonb,
+    28640,
+    'Leah Ortiz',
+    'leah.ortiz@shieldmutual.com',
+    'Primary workers comp policy for US employees.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'workers-comp-policy-apac-2026',
+    'APAC Workplace Injury Cover 2026',
+    'Northbridge Assurance',
+    'WC-APAC-2026-0042',
+    '2026-01-01',
+    '2026-12-31',
+    'Active',
+    '["India", "Singapore"]'::jsonb,
+    17320,
+    'Rina Kapoor',
+    'rina.kapoor@northbridgeassurance.com',
+    'Covers APAC operations for workplace injury claims.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  policy_name = excluded.policy_name,
+  carrier_name = excluded.carrier_name,
+  policy_number = excluded.policy_number,
+  coverage_start_date = excluded.coverage_start_date,
+  coverage_end_date = excluded.coverage_end_date,
+  status = excluded.status,
+  states_covered = excluded.states_covered,
+  premium_amount = excluded.premium_amount,
+  contact_name = excluded.contact_name,
+  contact_email = excluded.contact_email,
+  notes = excluded.notes;
+
+insert into public.workers_comp_claims (
+  organization_id,
+  seed_key,
+  employee_id,
+  employee_name,
+  policy_id,
+  policy_name,
+  incident_date,
+  reported_date,
+  claim_number,
+  claim_type,
+  status,
+  description,
+  amount_reserved,
+  amount_paid,
+  case_manager_name,
+  case_manager_email
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'workers-comp-claim-jordan-ergonomic',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-jordan-blake'),
+    'Jordan Blake',
+    (select id from public.workers_comp_policies where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'workers-comp-policy-us-2026'),
+    'US General Workers Compensation 2026',
+    '2026-03-04',
+    '2026-03-05',
+    'WC-CLAIM-10017',
+    'Ergonomic Injury',
+    'Open',
+    'Reported wrist strain linked to prolonged remote workstation use.',
+    3200,
+    450,
+    'Leah Ortiz',
+    'leah.ortiz@shieldmutual.com'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'workers-comp-claim-marcus-travel-fall',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-marcus-lee'),
+    'Marcus Lee',
+    (select id from public.workers_comp_policies where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'workers-comp-policy-apac-2026'),
+    'APAC Workplace Injury Cover 2026',
+    '2026-02-18',
+    '2026-02-18',
+    'WC-CLAIM-10004',
+    'Travel Incident',
+    'In Review',
+    'Minor fall during onsite client visit; invoices are still being reconciled.',
+    1800,
+    0,
+    'Rina Kapoor',
+    'rina.kapoor@northbridgeassurance.com'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  employee_id = excluded.employee_id,
+  employee_name = excluded.employee_name,
+  policy_id = excluded.policy_id,
+  policy_name = excluded.policy_name,
+  incident_date = excluded.incident_date,
+  reported_date = excluded.reported_date,
+  claim_number = excluded.claim_number,
+  claim_type = excluded.claim_type,
+  status = excluded.status,
+  description = excluded.description,
+  amount_reserved = excluded.amount_reserved,
+  amount_paid = excluded.amount_paid,
+  case_manager_name = excluded.case_manager_name,
+  case_manager_email = excluded.case_manager_email;
+
 insert into public.approvals (
   organization_id,
   seed_key,

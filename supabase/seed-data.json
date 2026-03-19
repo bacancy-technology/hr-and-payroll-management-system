@@ -450,6 +450,68 @@
       "notes": "Waiting on final wage reconciliation."
     }
   ],
+  "workersCompPolicies": [
+    {
+      "seedKey": "workers-comp-policy-us-2026",
+      "policyName": "US General Workers Compensation 2026",
+      "carrierName": "Shield Mutual",
+      "policyNumber": "WC-US-2026-0019",
+      "coverageStartDate": "2026-01-01",
+      "coverageEndDate": "2026-12-31",
+      "status": "Active",
+      "statesCovered": ["California", "New York", "Texas"],
+      "premiumAmount": 28640,
+      "contactName": "Leah Ortiz",
+      "contactEmail": "leah.ortiz@shieldmutual.com",
+      "notes": "Primary workers comp policy for US employees."
+    },
+    {
+      "seedKey": "workers-comp-policy-apac-2026",
+      "policyName": "APAC Workplace Injury Cover 2026",
+      "carrierName": "Northbridge Assurance",
+      "policyNumber": "WC-APAC-2026-0042",
+      "coverageStartDate": "2026-01-01",
+      "coverageEndDate": "2026-12-31",
+      "status": "Active",
+      "statesCovered": ["India", "Singapore"],
+      "premiumAmount": 17320,
+      "contactName": "Rina Kapoor",
+      "contactEmail": "rina.kapoor@northbridgeassurance.com",
+      "notes": "Covers APAC operations for workplace injury claims."
+    }
+  ],
+  "workersCompClaims": [
+    {
+      "seedKey": "workers-comp-claim-jordan-ergonomic",
+      "employeeName": "Jordan Blake",
+      "policySeedKey": "workers-comp-policy-us-2026",
+      "incidentDate": "2026-03-04",
+      "reportedDate": "2026-03-05",
+      "claimNumber": "WC-CLAIM-10017",
+      "claimType": "Ergonomic Injury",
+      "status": "Open",
+      "description": "Reported wrist strain linked to prolonged remote workstation use.",
+      "amountReserved": 3200,
+      "amountPaid": 450,
+      "caseManagerName": "Leah Ortiz",
+      "caseManagerEmail": "leah.ortiz@shieldmutual.com"
+    },
+    {
+      "seedKey": "workers-comp-claim-marcus-travel-fall",
+      "employeeName": "Marcus Lee",
+      "policySeedKey": "workers-comp-policy-apac-2026",
+      "incidentDate": "2026-02-18",
+      "reportedDate": "2026-02-18",
+      "claimNumber": "WC-CLAIM-10004",
+      "claimType": "Travel Incident",
+      "status": "In Review",
+      "description": "Minor fall during onsite client visit; invoices are still being reconciled.",
+      "amountReserved": 1800,
+      "amountPaid": 0,
+      "caseManagerName": "Rina Kapoor",
+      "caseManagerEmail": "rina.kapoor@northbridgeassurance.com"
+    }
+  ],
   "approvals": [
     {
       "seedKey": "approval-leave-marcus-lee",

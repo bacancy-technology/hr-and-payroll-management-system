@@ -65,3 +65,26 @@ export async function ensurePayPeriodExistsInOrganization(
     throw new ApiError(404, "Pay period not found.");
   }
 }
+
+export async function getWorkersCompPolicySummaryInOrganization(
+  supabase: AuthenticatedSupabaseClient,
+  organizationId: string,
+  policyId: string,
+) {
+  const { data, error } = await supabase
+    .from("workers_comp_policies")
+    .select("id, policy_name")
+    .eq("organization_id", organizationId)
+    .eq("id", policyId)
+    .maybeSingle();
+
+  if (error) {
+    throw new ApiError(500, "Failed to load the workers comp policy reference.", error.message);
+  }
+
+  if (!data) {
+    throw new ApiError(404, "Workers comp policy not found.");
+  }
+
+  return data;
+}

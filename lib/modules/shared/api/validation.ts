@@ -117,6 +117,30 @@ export function readOptionalDate(record: UnknownRecord, key: string) {
   return value;
 }
 
+export function readOptionalStringArray(record: UnknownRecord, key: string) {
+  const value = record[key];
+
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || item.trim() === "")) {
+    throw new ApiError(400, `${key} must be an array of non-empty strings.`);
+  }
+
+  return value.map((item) => item.trim());
+}
+
+export function readRequiredStringArray(record: UnknownRecord, key: string, label: string) {
+  const value = readOptionalStringArray(record, key);
+
+  if (!value) {
+    throw new ApiError(400, `${label} is required.`);
+  }
+
+  return value;
+}
+
 export function readRequiredDate(record: UnknownRecord, key: string, label: string) {
   const value = readOptionalDate(record, key);
 

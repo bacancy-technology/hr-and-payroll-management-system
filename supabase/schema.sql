@@ -238,6 +238,47 @@ create table if not exists public.tax_filings (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.workers_comp_policies (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  policy_name text not null,
+  carrier_name text not null,
+  policy_number text not null,
+  coverage_start_date date not null,
+  coverage_end_date date not null,
+  status text not null default 'Active',
+  states_covered jsonb not null default '[]'::jsonb,
+  premium_amount numeric(12, 2) not null default 0 check (premium_amount >= 0),
+  contact_name text,
+  contact_email text,
+  notes text,
+  created_at timestamptz not null default now(),
+  check (coverage_end_date >= coverage_start_date)
+);
+
+create table if not exists public.workers_comp_claims (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  employee_id uuid references public.employees (id) on delete set null,
+  employee_name text not null,
+  policy_id uuid references public.workers_comp_policies (id) on delete set null,
+  policy_name text not null,
+  incident_date date not null,
+  reported_date date not null,
+  claim_number text,
+  claim_type text not null,
+  status text not null default 'Open',
+  description text,
+  amount_reserved numeric(12, 2) not null default 0 check (amount_reserved >= 0),
+  amount_paid numeric(12, 2) not null default 0 check (amount_paid >= 0),
+  case_manager_name text,
+  case_manager_email text,
+  created_at timestamptz not null default now(),
+  check (reported_date >= incident_date)
+);
+
 create table if not exists public.approvals (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -541,6 +582,48 @@ alter table public.tax_filings alter column seed_key set not null;
 alter table public.tax_filings add column if not exists filed_at timestamptz;
 alter table public.tax_filings add column if not exists notes text;
 
+alter table public.workers_comp_policies add column if not exists seed_key text;
+update public.workers_comp_policies set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.workers_comp_policies alter column seed_key set default gen_random_uuid()::text;
+alter table public.workers_comp_policies alter column seed_key set not null;
+alter table public.workers_comp_policies add column if not exists states_covered jsonb;
+update public.workers_comp_policies set states_covered = '[]'::jsonb where states_covered is null;
+alter table public.workers_comp_policies alter column states_covered set default '[]'::jsonb;
+alter table public.workers_comp_policies alter column states_covered set not null;
+alter table public.workers_comp_policies add column if not exists premium_amount numeric(12, 2);
+update public.workers_comp_policies set premium_amount = 0 where premium_amount is null;
+alter table public.workers_comp_policies alter column premium_amount set default 0;
+alter table public.workers_comp_policies alter column premium_amount set not null;
+alter table public.workers_comp_policies add column if not exists contact_name text;
+alter table public.workers_comp_policies add column if not exists contact_email text;
+alter table public.workers_comp_policies add column if not exists notes text;
+
+alter table public.workers_comp_claims add column if not exists seed_key text;
+update public.workers_comp_claims set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.workers_comp_claims alter column seed_key set default gen_random_uuid()::text;
+alter table public.workers_comp_claims alter column seed_key set not null;
+alter table public.workers_comp_claims add column if not exists employee_id uuid references public.employees (id) on delete set null;
+alter table public.workers_comp_claims add column if not exists policy_id uuid references public.workers_comp_policies (id) on delete set null;
+alter table public.workers_comp_claims add column if not exists claim_number text;
+alter table public.workers_comp_claims add column if not exists claim_type text;
+alter table public.workers_comp_claims add column if not exists description text;
+alter table public.workers_comp_claims add column if not exists amount_reserved numeric(12, 2);
+update public.workers_comp_claims set amount_reserved = 0 where amount_reserved is null;
+alter table public.workers_comp_claims alter column amount_reserved set default 0;
+alter table public.workers_comp_claims alter column amount_reserved set not null;
+alter table public.workers_comp_claims add column if not exists amount_paid numeric(12, 2);
+update public.workers_comp_claims set amount_paid = 0 where amount_paid is null;
+alter table public.workers_comp_claims alter column amount_paid set default 0;
+alter table public.workers_comp_claims alter column amount_paid set not null;
+alter table public.workers_comp_claims add column if not exists case_manager_name text;
+alter table public.workers_comp_claims add column if not exists case_manager_email text;
+update public.workers_comp_claims
+set employee_id = employees.id
+from public.employees as employees
+where public.workers_comp_claims.employee_id is null
+  and public.workers_comp_claims.organization_id = employees.organization_id
+  and public.workers_comp_claims.employee_name = employees.full_name;
+
 alter table public.approvals add column if not exists seed_key text;
 update public.approvals set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.approvals alter column seed_key set default gen_random_uuid()::text;
@@ -658,6 +741,10 @@ create index if not exists compliance_rules_organization_id_idx on public.compli
 create index if not exists compliance_alerts_organization_id_idx on public.compliance_alerts (organization_id);
 create index if not exists compliance_alerts_rule_id_idx on public.compliance_alerts (rule_id);
 create index if not exists tax_filings_organization_id_idx on public.tax_filings (organization_id);
+create index if not exists workers_comp_policies_organization_id_idx on public.workers_comp_policies (organization_id);
+create index if not exists workers_comp_claims_organization_id_idx on public.workers_comp_claims (organization_id);
+create index if not exists workers_comp_claims_employee_id_idx on public.workers_comp_claims (employee_id);
+create index if not exists workers_comp_claims_policy_id_idx on public.workers_comp_claims (policy_id);
 create index if not exists approvals_organization_id_idx on public.approvals (organization_id);
 create index if not exists approvals_entity_idx on public.approvals (entity_type, entity_id);
 create index if not exists documents_organization_id_idx on public.documents (organization_id);
@@ -721,6 +808,12 @@ create unique index if not exists compliance_alerts_organization_seed_key_idx
   on public.compliance_alerts (organization_id, seed_key);
 create unique index if not exists tax_filings_organization_seed_key_idx
   on public.tax_filings (organization_id, seed_key);
+create unique index if not exists workers_comp_policies_organization_seed_key_idx
+  on public.workers_comp_policies (organization_id, seed_key);
+create unique index if not exists workers_comp_policies_organization_policy_number_idx
+  on public.workers_comp_policies (organization_id, policy_number);
+create unique index if not exists workers_comp_claims_organization_seed_key_idx
+  on public.workers_comp_claims (organization_id, seed_key);
 create unique index if not exists approvals_organization_seed_key_idx
   on public.approvals (organization_id, seed_key);
 create unique index if not exists documents_organization_seed_key_idx
@@ -773,6 +866,8 @@ alter table public.expenses enable row level security;
 alter table public.compliance_rules enable row level security;
 alter table public.compliance_alerts enable row level security;
 alter table public.tax_filings enable row level security;
+alter table public.workers_comp_policies enable row level security;
+alter table public.workers_comp_claims enable row level security;
 alter table public.approvals enable row level security;
 alter table public.documents enable row level security;
 alter table public.bank_accounts enable row level security;
@@ -1246,6 +1341,64 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete tax filings in their organization" on public.tax_filings;
 create policy "users can delete tax filings in their organization"
 on public.tax_filings
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read workers comp policies in their organization" on public.workers_comp_policies;
+create policy "users can read workers comp policies in their organization"
+on public.workers_comp_policies
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert workers comp policies in their organization" on public.workers_comp_policies;
+create policy "users can insert workers comp policies in their organization"
+on public.workers_comp_policies
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update workers comp policies in their organization" on public.workers_comp_policies;
+create policy "users can update workers comp policies in their organization"
+on public.workers_comp_policies
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete workers comp policies in their organization" on public.workers_comp_policies;
+create policy "users can delete workers comp policies in their organization"
+on public.workers_comp_policies
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read workers comp claims in their organization" on public.workers_comp_claims;
+create policy "users can read workers comp claims in their organization"
+on public.workers_comp_claims
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert workers comp claims in their organization" on public.workers_comp_claims;
+create policy "users can insert workers comp claims in their organization"
+on public.workers_comp_claims
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update workers comp claims in their organization" on public.workers_comp_claims;
+create policy "users can update workers comp claims in their organization"
+on public.workers_comp_claims
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete workers comp claims in their organization" on public.workers_comp_claims;
+create policy "users can delete workers comp claims in their organization"
+on public.workers_comp_claims
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

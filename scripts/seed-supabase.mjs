@@ -299,6 +299,22 @@ async function main() {
     amount: filing.amount,
     notes: filing.notes ?? null,
   }));
+  const workersCompPolicies = (seedData.workersCompPolicies ?? []).map((policy) => ({
+    organization_id: organizationId,
+    seed_key: policy.seedKey,
+    policy_name: policy.policyName,
+    carrier_name: policy.carrierName,
+    policy_number: policy.policyNumber,
+    coverage_start_date: policy.coverageStartDate,
+    coverage_end_date: policy.coverageEndDate,
+    status: policy.status,
+    states_covered: policy.statesCovered ?? [],
+    premium_amount: policy.premiumAmount,
+    contact_name: policy.contactName ?? null,
+    contact_email: policy.contactEmail ?? null,
+    notes: policy.notes ?? null,
+  }));
+  const workersCompClaimsSeed = seedData.workersCompClaims ?? [];
 
   const onboardingWorkflows = (seedData.onboardingWorkflows ?? []).map((workflow) => ({
     organization_id: organizationId,
@@ -346,7 +362,7 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: complianceRulesError }, { error: taxFilingsError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
+  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: complianceRulesError }, { error: taxFilingsError }, { error: workersCompPoliciesError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
     await Promise.all([
       supabase.from("employees").upsert(employees, {
         onConflict: "organization_id,seed_key",
@@ -373,6 +389,9 @@ async function main() {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("tax_filings").upsert(taxFilings, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("workers_comp_policies").upsert(workersCompPolicies, {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("benefits_plans").upsert(benefitsPlans, {
@@ -422,6 +441,10 @@ async function main() {
     throw new Error(`Failed to seed tax filings: ${taxFilingsError.message}`);
   }
 
+  if (workersCompPoliciesError) {
+    throw new Error(`Failed to seed workers comp policies: ${workersCompPoliciesError.message}`);
+  }
+
   if (benefitsPlansError) {
     throw new Error(`Failed to seed benefits plans: ${benefitsPlansError.message}`);
   }
@@ -455,6 +478,24 @@ async function main() {
   const employeeIdBySeedKey = new Map(employeeRows.map((employee) => [employee.seed_key, employee.id]));
   const payPeriodIdBySeedKey = new Map(payPeriodRows.map((period) => [period.seed_key, period.id]));
   const payPeriodSeedKeyByLabel = new Map(seedData.payPeriods.map((period) => [period.label, period.seedKey]));
+
+  const { data: workersCompPolicyRows, error: workersCompPolicyRowsError } = await supabase
+    .from("workers_comp_policies")
+    .select("id, seed_key, policy_name")
+    .eq("organization_id", organizationId);
+
+  if (workersCompPolicyRowsError) {
+    throw new Error(
+      `Failed to load workers comp policies after seeding: ${workersCompPolicyRowsError.message}`,
+    );
+  }
+
+  const workersCompPolicyIdBySeedKey = new Map(
+    workersCompPolicyRows.map((policy) => [policy.seed_key, policy.id]),
+  );
+  const workersCompPolicyNameBySeedKey = new Map(
+    workersCompPolicyRows.map((policy) => [policy.seed_key, policy.policy_name]),
+  );
 
   const bankAccounts = bankAccountsSeed.map((account) => ({
     organization_id: organizationId,
@@ -700,6 +741,33 @@ async function main() {
     throw new Error(`Failed to seed compliance alerts: ${complianceAlertsError.message}`);
   }
 
+  const workersCompClaims = workersCompClaimsSeed.map((claim) => ({
+    organization_id: organizationId,
+    seed_key: claim.seedKey,
+    employee_id: employeeIdBySeedKey.get(employeeIdByName.get(claim.employeeName)) ?? null,
+    employee_name: claim.employeeName,
+    policy_id: workersCompPolicyIdBySeedKey.get(claim.policySeedKey) ?? null,
+    policy_name: workersCompPolicyNameBySeedKey.get(claim.policySeedKey) ?? claim.policySeedKey,
+    incident_date: claim.incidentDate,
+    reported_date: claim.reportedDate,
+    claim_number: claim.claimNumber ?? null,
+    claim_type: claim.claimType,
+    status: claim.status,
+    description: claim.description ?? null,
+    amount_reserved: claim.amountReserved ?? 0,
+    amount_paid: claim.amountPaid ?? 0,
+    case_manager_name: claim.caseManagerName ?? null,
+    case_manager_email: claim.caseManagerEmail ?? null,
+  }));
+
+  const { error: workersCompClaimsError } = await supabase.from("workers_comp_claims").upsert(workersCompClaims, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (workersCompClaimsError) {
+    throw new Error(`Failed to seed workers comp claims: ${workersCompClaimsError.message}`);
+  }
+
   const timeEntries = seedData.timeEntries.map((entry) => ({
     organization_id: organizationId,
     seed_key: entry.seedKey,
@@ -831,6 +899,8 @@ async function main() {
   console.log(`Compliance rules: ${complianceRules.length}`);
   console.log(`Compliance alerts: ${complianceAlerts.length}`);
   console.log(`Tax filings: ${taxFilings.length}`);
+  console.log(`Workers comp policies: ${workersCompPolicies.length}`);
+  console.log(`Workers comp claims: ${workersCompClaims.length}`);
   console.log(`Benefits plans: ${benefitsPlans.length}`);
   console.log(`Benefits enrollments: ${benefitsEnrollments.length}`);
   console.log(`Performance review templates: ${performanceReviewTemplates.length}`);

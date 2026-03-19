@@ -93,6 +93,16 @@ export function readOptionalNumber(record: UnknownRecord, key: string) {
   return value;
 }
 
+export function readRequiredNumber(record: UnknownRecord, key: string, label: string) {
+  const value = readOptionalNumber(record, key);
+
+  if (value === undefined) {
+    throw new ApiError(400, `${label} is required.`);
+  }
+
+  return value;
+}
+
 export function readOptionalDate(record: UnknownRecord, key: string) {
   const value = readOptionalString(record, key);
 
@@ -102,6 +112,16 @@ export function readOptionalDate(record: UnknownRecord, key: string) {
 
   if (Number.isNaN(Date.parse(value))) {
     throw new ApiError(400, `${key} must be a valid date string.`);
+  }
+
+  return value;
+}
+
+export function readRequiredDate(record: UnknownRecord, key: string, label: string) {
+  const value = readOptionalDate(record, key);
+
+  if (!value) {
+    throw new ApiError(400, `${label} is required.`);
   }
 
   return value;

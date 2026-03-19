@@ -104,6 +104,38 @@
       "nextReviewAt": "2026-04-07"
     }
   ],
+  "contractors": [
+    {
+      "seedKey": "contractor-rhea-singh",
+      "fullName": "Rhea Singh",
+      "email": "rhea.singh@contractor.pulsehr.app",
+      "specialization": "Content Operations Consultant",
+      "status": "Active",
+      "location": "Delhi",
+      "paymentType": "Monthly Retainer",
+      "hourlyRate": 0,
+      "flatRate": 6400,
+      "taxClassification": "1099",
+      "contractStartDate": "2025-11-01",
+      "contractEndDate": "2026-08-31",
+      "managerName": "Anika Raman"
+    },
+    {
+      "seedKey": "contractor-liam-chen",
+      "fullName": "Liam Chen",
+      "email": "liam.chen@contractor.pulsehr.app",
+      "specialization": "Frontend Accessibility Specialist",
+      "status": "Active",
+      "location": "Taipei",
+      "paymentType": "Hourly",
+      "hourlyRate": 110,
+      "flatRate": 0,
+      "taxClassification": "1099",
+      "contractStartDate": "2026-01-15",
+      "contractEndDate": "2026-06-30",
+      "managerName": "Mina Carter"
+    }
+  ],
   "payrollRuns": [
     {
       "seedKey": "payroll-run-2026-03",

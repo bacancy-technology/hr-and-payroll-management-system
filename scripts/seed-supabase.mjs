@@ -128,6 +128,23 @@ async function main() {
     next_review_at: employee.nextReviewAt,
   }));
 
+  const contractors = (seedData.contractors ?? []).map((contractor) => ({
+    organization_id: organizationId,
+    seed_key: contractor.seedKey,
+    full_name: contractor.fullName,
+    email: contractor.email,
+    specialization: contractor.specialization,
+    status: contractor.status,
+    location: contractor.location,
+    payment_type: contractor.paymentType,
+    hourly_rate: contractor.hourlyRate,
+    flat_rate: contractor.flatRate,
+    tax_classification: contractor.taxClassification,
+    contract_start_date: contractor.contractStartDate,
+    contract_end_date: contractor.contractEndDate,
+    manager_name: contractor.managerName,
+  }));
+
   const payrollRuns = seedData.payrollRuns.map((run) => ({
     organization_id: organizationId,
     seed_key: run.seedKey,
@@ -194,9 +211,12 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: employeesError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: announcementsError }] =
+  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: announcementsError }] =
     await Promise.all([
       supabase.from("employees").upsert(employees, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("contractors").upsert(contractors, {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("payroll_runs").upsert(payrollRuns, {
@@ -219,6 +239,10 @@ async function main() {
 
   if (payrollError) {
     throw new Error(`Failed to seed payroll runs: ${payrollError.message}`);
+  }
+
+  if (contractorsError) {
+    throw new Error(`Failed to seed contractors: ${contractorsError.message}`);
   }
 
   if (payPeriodsError) {
@@ -488,6 +512,7 @@ async function main() {
   console.log(`Seeded organization ${organizationId}`);
   console.log(`Departments: ${departments.length}`);
   console.log(`Employees: ${employees.length}`);
+  console.log(`Contractors: ${contractors.length}`);
   console.log(`Payroll runs: ${payrollRuns.length}`);
   console.log(`Payroll items: ${payrollItems.length}`);
   console.log(`Pay periods: ${payPeriods.length}`);

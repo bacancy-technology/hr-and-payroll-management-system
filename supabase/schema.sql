@@ -44,6 +44,26 @@ create table if not exists public.employees (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.contractors (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  full_name text not null,
+  email text not null,
+  specialization text not null,
+  status text not null default 'Active',
+  location text not null,
+  payment_type text not null,
+  hourly_rate numeric(12, 2) not null default 0 check (hourly_rate >= 0),
+  flat_rate numeric(12, 2) not null default 0 check (flat_rate >= 0),
+  tax_classification text not null default '1099',
+  contract_start_date date not null,
+  contract_end_date date,
+  manager_name text not null,
+  created_at timestamptz not null default now(),
+  check (contract_end_date is null or contract_end_date >= contract_start_date)
+);
+
 create table if not exists public.payroll_runs (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -230,6 +250,15 @@ update public.employees set email = concat(lower(replace(full_name, ' ', '.')), 
 alter table public.employees alter column email set not null;
 alter table public.employees alter column email drop default;
 
+alter table public.contractors add column if not exists seed_key text;
+update public.contractors set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.contractors alter column seed_key set default gen_random_uuid()::text;
+alter table public.contractors alter column seed_key set not null;
+alter table public.contractors add column if not exists email text;
+update public.contractors set email = concat(lower(replace(full_name, ' ', '.')), '@contractor.pulsehr.app') where coalesce(email, '') = '';
+alter table public.contractors alter column email set not null;
+alter table public.contractors alter column email drop default;
+
 do $$
 begin
   if exists (
@@ -354,6 +383,7 @@ alter table public.announcements alter column seed_key set not null;
 
 create index if not exists departments_organization_id_idx on public.departments (organization_id);
 create index if not exists employees_organization_id_idx on public.employees (organization_id);
+create index if not exists contractors_organization_id_idx on public.contractors (organization_id);
 create index if not exists payroll_runs_organization_id_idx on public.payroll_runs (organization_id);
 create index if not exists payroll_items_organization_id_idx on public.payroll_items (organization_id);
 create index if not exists payroll_items_payroll_run_id_idx on public.payroll_items (payroll_run_id);
@@ -382,6 +412,10 @@ create unique index if not exists employees_organization_seed_key_idx
   on public.employees (organization_id, seed_key);
 create unique index if not exists employees_organization_email_idx
   on public.employees (organization_id, email);
+create unique index if not exists contractors_organization_seed_key_idx
+  on public.contractors (organization_id, seed_key);
+create unique index if not exists contractors_organization_email_idx
+  on public.contractors (organization_id, email);
 create unique index if not exists payroll_runs_organization_seed_key_idx
   on public.payroll_runs (organization_id, seed_key);
 create unique index if not exists payroll_items_organization_seed_key_idx
@@ -425,6 +459,7 @@ $$;
 alter table public.profiles enable row level security;
 alter table public.departments enable row level security;
 alter table public.employees enable row level security;
+alter table public.contractors enable row level security;
 alter table public.payroll_runs enable row level security;
 alter table public.payroll_items enable row level security;
 alter table public.pay_periods enable row level security;
@@ -493,6 +528,35 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete employees in their organization" on public.employees;
 create policy "users can delete employees in their organization"
 on public.employees
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read contractors in their organization" on public.contractors;
+create policy "users can read contractors in their organization"
+on public.contractors
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert contractors in their organization" on public.contractors;
+create policy "users can insert contractors in their organization"
+on public.contractors
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update contractors in their organization" on public.contractors;
+create policy "users can update contractors in their organization"
+on public.contractors
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete contractors in their organization" on public.contractors;
+create policy "users can delete contractors in their organization"
+on public.contractors
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

@@ -63,6 +63,70 @@ set
   manager_name = excluded.manager_name,
   next_review_at = excluded.next_review_at;
 
+insert into public.contractors (
+  organization_id,
+  seed_key,
+  full_name,
+  email,
+  specialization,
+  status,
+  location,
+  payment_type,
+  hourly_rate,
+  flat_rate,
+  tax_classification,
+  contract_start_date,
+  contract_end_date,
+  manager_name
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'contractor-rhea-singh',
+    'Rhea Singh',
+    'rhea.singh@contractor.pulsehr.app',
+    'Content Operations Consultant',
+    'Active',
+    'Delhi',
+    'Monthly Retainer',
+    0,
+    6400,
+    '1099',
+    '2025-11-01',
+    '2026-08-31',
+    'Anika Raman'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'contractor-liam-chen',
+    'Liam Chen',
+    'liam.chen@contractor.pulsehr.app',
+    'Frontend Accessibility Specialist',
+    'Active',
+    'Taipei',
+    'Hourly',
+    110,
+    0,
+    '1099',
+    '2026-01-15',
+    '2026-06-30',
+    'Mina Carter'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  full_name = excluded.full_name,
+  email = excluded.email,
+  specialization = excluded.specialization,
+  status = excluded.status,
+  location = excluded.location,
+  payment_type = excluded.payment_type,
+  hourly_rate = excluded.hourly_rate,
+  flat_rate = excluded.flat_rate,
+  tax_classification = excluded.tax_classification,
+  contract_start_date = excluded.contract_start_date,
+  contract_end_date = excluded.contract_end_date,
+  manager_name = excluded.manager_name;
+
 insert into public.payroll_runs (
   organization_id,
   seed_key,

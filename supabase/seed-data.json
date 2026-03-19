@@ -474,6 +474,55 @@
       "notes": "Awaiting employee confirmation during open enrollment."
     }
   ],
+  "performanceReviewTemplates": [
+    {
+      "seedKey": "performance-template-quarterly-growth",
+      "name": "Quarterly Growth Review",
+      "cycleLabel": "Q2 2026",
+      "reviewType": "Quarterly",
+      "status": "Active",
+      "questions": [
+        "What outcomes did the employee own this cycle?",
+        "Where did they raise the quality bar for the team?",
+        "What is the highest-impact growth area for next quarter?"
+      ]
+    },
+    {
+      "seedKey": "performance-template-manager-checkin",
+      "name": "Manager Check-In",
+      "cycleLabel": "Monthly",
+      "reviewType": "Check-In",
+      "status": "Active",
+      "questions": [
+        "What progress was made against current goals?",
+        "What support or blockers need escalation?",
+        "Which skills should be coached in the next month?"
+      ]
+    }
+  ],
+  "performanceReviews": [
+    {
+      "seedKey": "performance-review-jordan-q2",
+      "employeeName": "Jordan Blake",
+      "templateSeedKey": "performance-template-quarterly-growth",
+      "reviewerName": "Mina Carter",
+      "status": "In Review",
+      "dueDate": "2026-04-05",
+      "score": 4.4,
+      "summary": "Strong delivery against platform reliability goals with clear ownership on backend modernization.",
+      "notes": "Pending final calibration feedback."
+    },
+    {
+      "seedKey": "performance-review-elena-checkin",
+      "employeeName": "Elena Torres",
+      "templateSeedKey": "performance-template-manager-checkin",
+      "reviewerName": "Anika Raman",
+      "status": "Draft",
+      "dueDate": "2026-03-28",
+      "summary": "New hiring funnel experiments are showing better recruiter response rates.",
+      "notes": "Manager draft is still in progress."
+    }
+  ],
   "onboardingWorkflows": [
     {
       "seedKey": "onboarding-elena-torres",

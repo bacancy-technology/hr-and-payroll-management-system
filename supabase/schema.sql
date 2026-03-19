@@ -243,6 +243,35 @@ create table if not exists public.benefits_enrollments (
   check (end_date is null or end_date >= effective_date)
 );
 
+create table if not exists public.performance_review_templates (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  name text not null,
+  cycle_label text not null,
+  review_type text not null,
+  status text not null default 'Active',
+  questions jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.performance_reviews (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  employee_id uuid references public.employees (id) on delete set null,
+  employee_name text not null,
+  template_id uuid not null references public.performance_review_templates (id) on delete cascade,
+  reviewer_name text not null,
+  status text not null default 'Draft',
+  due_date date not null,
+  submitted_at timestamptz,
+  score numeric(4, 2),
+  summary text,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.onboarding_workflows (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -447,6 +476,31 @@ where public.benefits_enrollments.employee_id is null
   and public.benefits_enrollments.organization_id = employees.organization_id
   and public.benefits_enrollments.employee_name = employees.full_name;
 
+alter table public.performance_review_templates add column if not exists seed_key text;
+update public.performance_review_templates set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.performance_review_templates alter column seed_key set default gen_random_uuid()::text;
+alter table public.performance_review_templates alter column seed_key set not null;
+alter table public.performance_review_templates add column if not exists questions jsonb;
+update public.performance_review_templates set questions = '[]'::jsonb where questions is null;
+alter table public.performance_review_templates alter column questions set default '[]'::jsonb;
+alter table public.performance_review_templates alter column questions set not null;
+
+alter table public.performance_reviews add column if not exists seed_key text;
+update public.performance_reviews set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.performance_reviews alter column seed_key set default gen_random_uuid()::text;
+alter table public.performance_reviews alter column seed_key set not null;
+alter table public.performance_reviews add column if not exists employee_id uuid references public.employees (id) on delete set null;
+alter table public.performance_reviews add column if not exists submitted_at timestamptz;
+alter table public.performance_reviews add column if not exists score numeric(4, 2);
+alter table public.performance_reviews add column if not exists summary text;
+alter table public.performance_reviews add column if not exists notes text;
+update public.performance_reviews
+set employee_id = employees.id
+from public.employees as employees
+where public.performance_reviews.employee_id is null
+  and public.performance_reviews.organization_id = employees.organization_id
+  and public.performance_reviews.employee_name = employees.full_name;
+
 alter table public.onboarding_workflows add column if not exists seed_key text;
 update public.onboarding_workflows set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.onboarding_workflows alter column seed_key set default gen_random_uuid()::text;
@@ -494,6 +548,10 @@ create index if not exists benefits_plans_organization_id_idx on public.benefits
 create index if not exists benefits_enrollments_organization_id_idx on public.benefits_enrollments (organization_id);
 create index if not exists benefits_enrollments_employee_id_idx on public.benefits_enrollments (employee_id);
 create index if not exists benefits_enrollments_plan_id_idx on public.benefits_enrollments (plan_id);
+create index if not exists performance_review_templates_organization_id_idx on public.performance_review_templates (organization_id);
+create index if not exists performance_reviews_organization_id_idx on public.performance_reviews (organization_id);
+create index if not exists performance_reviews_employee_id_idx on public.performance_reviews (employee_id);
+create index if not exists performance_reviews_template_id_idx on public.performance_reviews (template_id);
 create index if not exists onboarding_workflows_organization_id_idx on public.onboarding_workflows (organization_id);
 create index if not exists onboarding_workflows_employee_id_idx on public.onboarding_workflows (employee_id);
 create index if not exists onboarding_tasks_organization_id_idx on public.onboarding_tasks (organization_id);
@@ -540,6 +598,10 @@ create unique index if not exists benefits_plans_organization_seed_key_idx
   on public.benefits_plans (organization_id, seed_key);
 create unique index if not exists benefits_enrollments_organization_seed_key_idx
   on public.benefits_enrollments (organization_id, seed_key);
+create unique index if not exists performance_review_templates_organization_seed_key_idx
+  on public.performance_review_templates (organization_id, seed_key);
+create unique index if not exists performance_reviews_organization_seed_key_idx
+  on public.performance_reviews (organization_id, seed_key);
 create unique index if not exists onboarding_workflows_organization_seed_key_idx
   on public.onboarding_workflows (organization_id, seed_key);
 create unique index if not exists onboarding_tasks_organization_seed_key_idx
@@ -574,6 +636,8 @@ alter table public.documents enable row level security;
 alter table public.bank_accounts enable row level security;
 alter table public.benefits_plans enable row level security;
 alter table public.benefits_enrollments enable row level security;
+alter table public.performance_review_templates enable row level security;
+alter table public.performance_reviews enable row level security;
 alter table public.onboarding_workflows enable row level security;
 alter table public.onboarding_tasks enable row level security;
 alter table public.announcements enable row level security;
@@ -1011,6 +1075,64 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete benefits enrollments in their organization" on public.benefits_enrollments;
 create policy "users can delete benefits enrollments in their organization"
 on public.benefits_enrollments
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read performance review templates in their organization" on public.performance_review_templates;
+create policy "users can read performance review templates in their organization"
+on public.performance_review_templates
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert performance review templates in their organization" on public.performance_review_templates;
+create policy "users can insert performance review templates in their organization"
+on public.performance_review_templates
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update performance review templates in their organization" on public.performance_review_templates;
+create policy "users can update performance review templates in their organization"
+on public.performance_review_templates
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete performance review templates in their organization" on public.performance_review_templates;
+create policy "users can delete performance review templates in their organization"
+on public.performance_review_templates
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read performance reviews in their organization" on public.performance_reviews;
+create policy "users can read performance reviews in their organization"
+on public.performance_reviews
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert performance reviews in their organization" on public.performance_reviews;
+create policy "users can insert performance reviews in their organization"
+on public.performance_reviews
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update performance reviews in their organization" on public.performance_reviews;
+create policy "users can update performance reviews in their organization"
+on public.performance_reviews
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete performance reviews in their organization" on public.performance_reviews;
+create policy "users can delete performance reviews in their organization"
+on public.performance_reviews
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

@@ -231,6 +231,16 @@ async function main() {
     status: plan.status,
   }));
   const benefitsEnrollmentsSeed = seedData.benefitsEnrollments ?? [];
+  const performanceReviewTemplates = (seedData.performanceReviewTemplates ?? []).map((template) => ({
+    organization_id: organizationId,
+    seed_key: template.seedKey,
+    name: template.name,
+    cycle_label: template.cycleLabel,
+    review_type: template.reviewType,
+    status: template.status,
+    questions: template.questions,
+  }));
+  const performanceReviewsSeed = seedData.performanceReviews ?? [];
 
   const announcements = seedData.announcements.map((announcement) => ({
     organization_id: organizationId,
@@ -241,7 +251,7 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: expensesError }, { error: benefitsPlansError }, { error: announcementsError }] =
+  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: expensesError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
     await Promise.all([
       supabase.from("employees").upsert(employees, {
         onConflict: "organization_id,seed_key",
@@ -262,6 +272,9 @@ async function main() {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("benefits_plans").upsert(benefitsPlans, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("performance_review_templates").upsert(performanceReviewTemplates, {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("announcements").upsert(announcements, {
@@ -295,6 +308,10 @@ async function main() {
 
   if (benefitsPlansError) {
     throw new Error(`Failed to seed benefits plans: ${benefitsPlansError.message}`);
+  }
+
+  if (performanceTemplatesError) {
+    throw new Error(`Failed to seed performance review templates: ${performanceTemplatesError.message}`);
   }
 
   if (announcementsError) {
@@ -499,6 +516,44 @@ async function main() {
     throw new Error(`Failed to seed benefits enrollments: ${benefitsEnrollmentsError.message}`);
   }
 
+  const { data: performanceTemplateRows, error: performanceTemplateRowsError } = await supabase
+    .from("performance_review_templates")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (performanceTemplateRowsError) {
+    throw new Error(
+      `Failed to load performance review templates after seeding: ${performanceTemplateRowsError.message}`,
+    );
+  }
+
+  const performanceTemplateIdBySeedKey = new Map(
+    performanceTemplateRows.map((template) => [template.seed_key, template.id]),
+  );
+
+  const performanceReviews = performanceReviewsSeed.map((review) => ({
+    organization_id: organizationId,
+    seed_key: review.seedKey,
+    employee_id: employeeIdBySeedKey.get(employeeIdByName.get(review.employeeName)) ?? null,
+    employee_name: review.employeeName,
+    template_id: performanceTemplateIdBySeedKey.get(review.templateSeedKey) ?? null,
+    reviewer_name: review.reviewerName,
+    status: review.status,
+    due_date: review.dueDate,
+    submitted_at: review.submittedAt ?? null,
+    score: review.score ?? null,
+    summary: review.summary ?? null,
+    notes: review.notes ?? null,
+  }));
+
+  const { error: performanceReviewsError } = await supabase.from("performance_reviews").upsert(performanceReviews, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (performanceReviewsError) {
+    throw new Error(`Failed to seed performance reviews: ${performanceReviewsError.message}`);
+  }
+
   const timeEntries = seedData.timeEntries.map((entry) => ({
     organization_id: organizationId,
     seed_key: entry.seedKey,
@@ -626,6 +681,8 @@ async function main() {
   console.log(`Expenses: ${expenses.length}`);
   console.log(`Benefits plans: ${benefitsPlans.length}`);
   console.log(`Benefits enrollments: ${benefitsEnrollments.length}`);
+  console.log(`Performance review templates: ${performanceReviewTemplates.length}`);
+  console.log(`Performance reviews: ${performanceReviews.length}`);
   console.log(`Approvals: ${approvals.length}`);
   console.log(`Documents: ${documents.length}`);
   console.log(`Bank accounts: ${bankAccounts.length}`);

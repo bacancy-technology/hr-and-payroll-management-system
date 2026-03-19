@@ -688,6 +688,94 @@ set
   payroll_deduction = excluded.payroll_deduction,
   notes = excluded.notes;
 
+insert into public.performance_review_templates (
+  organization_id,
+  seed_key,
+  name,
+  cycle_label,
+  review_type,
+  status,
+  questions
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'performance-template-quarterly-growth',
+    'Quarterly Growth Review',
+    'Q2 2026',
+    'Quarterly',
+    'Active',
+    '["What outcomes did the employee own this cycle?", "Where did they raise the quality bar for the team?", "What is the highest-impact growth area for next quarter?"]'::jsonb
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'performance-template-manager-checkin',
+    'Manager Check-In',
+    'Monthly',
+    'Check-In',
+    'Active',
+    '["What progress was made against current goals?", "What support or blockers need escalation?", "Which skills should be coached in the next month?"]'::jsonb
+  )
+on conflict (organization_id, seed_key) do update
+set
+  name = excluded.name,
+  cycle_label = excluded.cycle_label,
+  review_type = excluded.review_type,
+  status = excluded.status,
+  questions = excluded.questions;
+
+insert into public.performance_reviews (
+  organization_id,
+  seed_key,
+  employee_id,
+  employee_name,
+  template_id,
+  reviewer_name,
+  status,
+  due_date,
+  score,
+  summary,
+  notes
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'performance-review-jordan-q2',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-jordan-blake'),
+    'Jordan Blake',
+    (select id from public.performance_review_templates where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'performance-template-quarterly-growth'),
+    'Mina Carter',
+    'In Review',
+    '2026-04-05',
+    4.40,
+    'Strong delivery against platform reliability goals with clear ownership on backend modernization.',
+    'Pending final calibration feedback.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'performance-review-elena-checkin',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-elena-torres'),
+    'Elena Torres',
+    (select id from public.performance_review_templates where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'performance-template-manager-checkin'),
+    'Anika Raman',
+    'Draft',
+    '2026-03-28',
+    null,
+    'New hiring funnel experiments are showing better recruiter response rates.',
+    'Manager draft is still in progress.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  employee_id = excluded.employee_id,
+  employee_name = excluded.employee_name,
+  template_id = excluded.template_id,
+  reviewer_name = excluded.reviewer_name,
+  status = excluded.status,
+  due_date = excluded.due_date,
+  score = excluded.score,
+  summary = excluded.summary,
+  notes = excluded.notes;
+
 insert into public.onboarding_workflows (
   organization_id,
   seed_key,

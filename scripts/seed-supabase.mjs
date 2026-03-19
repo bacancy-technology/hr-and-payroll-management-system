@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -182,6 +183,7 @@ async function main() {
   }));
 
   const onboardingTasksSeed = seedData.onboardingTasks ?? [];
+  const bankAccountsSeed = seedData.bankAccounts ?? [];
 
   const announcements = seedData.announcements.map((announcement) => ({
     organization_id: organizationId,
@@ -253,6 +255,22 @@ async function main() {
   const payPeriodIdBySeedKey = new Map(payPeriodRows.map((period) => [period.seed_key, period.id]));
   const payPeriodSeedKeyByLabel = new Map(seedData.payPeriods.map((period) => [period.label, period.seedKey]));
 
+  const bankAccounts = bankAccountsSeed.map((account) => ({
+    organization_id: organizationId,
+    seed_key: account.seedKey,
+    employee_id: employeeIdBySeedKey.get(employeeIdByName.get(account.employeeName)) ?? null,
+    account_holder_name: account.accountHolderName,
+    bank_name: account.bankName,
+    account_type: account.accountType,
+    account_last4: account.accountLast4,
+    routing_last4: account.routingLast4,
+    status: account.status,
+    is_primary: Boolean(account.isPrimary),
+    provider_reference: account.providerReference ?? `seed-${randomUUID()}`,
+    verified_at: account.verifiedAt ?? null,
+    notes: account.notes ?? null,
+  }));
+
   const payrollRunsWithPayPeriods = payrollRuns.map((run) => ({
     ...run,
     pay_period_id: payPeriodIdBySeedKey.get(
@@ -294,6 +312,30 @@ async function main() {
 
   if (leaveRequestsWithEmployeesError) {
     throw new Error(`Failed to update leave requests with employee references: ${leaveRequestsWithEmployeesError.message}`);
+  }
+
+  const primaryEmployeeIds = new Set(
+    bankAccounts.filter((account) => account.is_primary && account.employee_id).map((account) => account.employee_id),
+  );
+
+  if (primaryEmployeeIds.size > 0) {
+    const { error: clearPrimaryBankAccountsError } = await supabase
+      .from("bank_accounts")
+      .update({ is_primary: false })
+      .eq("organization_id", organizationId)
+      .in("employee_id", [...primaryEmployeeIds]);
+
+    if (clearPrimaryBankAccountsError) {
+      throw new Error(`Failed to reset primary bank accounts before seeding: ${clearPrimaryBankAccountsError.message}`);
+    }
+  }
+
+  const { error: bankAccountsError } = await supabase.from("bank_accounts").upsert(bankAccounts, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (bankAccountsError) {
+    throw new Error(`Failed to seed bank accounts: ${bankAccountsError.message}`);
   }
 
   const onboardingWorkflowsWithEmployeeIds = onboardingWorkflows.map((workflow) => ({
@@ -453,6 +495,7 @@ async function main() {
   console.log(`Leave requests: ${leaveRequests.length}`);
   console.log(`Approvals: ${approvals.length}`);
   console.log(`Documents: ${documents.length}`);
+  console.log(`Bank accounts: ${bankAccounts.length}`);
   console.log(`Onboarding workflows: ${onboardingWorkflows.length}`);
   console.log(`Onboarding tasks: ${onboardingTasks.length}`);
   console.log(`Announcements: ${announcements.length}`);

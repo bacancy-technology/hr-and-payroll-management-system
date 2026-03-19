@@ -323,6 +323,33 @@
       "visibility": "Internal"
     }
   ],
+  "bankAccounts": [
+    {
+      "seedKey": "bank-account-anika-primary",
+      "employeeName": "Anika Raman",
+      "accountHolderName": "Anika Raman",
+      "bankName": "HDFC Bank",
+      "accountType": "Checking",
+      "accountLast4": "4182",
+      "routingLast4": "0091",
+      "status": "Verified",
+      "isPrimary": true,
+      "verifiedAt": "2026-03-05T10:00:00Z",
+      "notes": "Primary payroll disbursement account."
+    },
+    {
+      "seedKey": "bank-account-priya-primary",
+      "employeeName": "Priya Nair",
+      "accountHolderName": "Priya Nair",
+      "bankName": "ICICI Bank",
+      "accountType": "Checking",
+      "accountLast4": "5724",
+      "routingLast4": "4820",
+      "status": "Pending Verification",
+      "isPrimary": true,
+      "notes": "Awaiting penny test confirmation."
+    }
+  ],
   "onboardingWorkflows": [
     {
       "seedKey": "onboarding-elena-torres",

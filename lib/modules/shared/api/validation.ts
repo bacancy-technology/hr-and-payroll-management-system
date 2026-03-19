@@ -68,6 +68,17 @@ export function readOptionalUuid(record: UnknownRecord, key: string) {
   return value;
 }
 
+export function readRequiredUuid(record: UnknownRecord, key: string, label: string) {
+  const value = readRequiredString(record, key, label);
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(value)) {
+    throw new ApiError(400, `${label} must be a valid UUID.`);
+  }
+
+  return value;
+}
+
 export function readOptionalNumber(record: UnknownRecord, key: string) {
   const value = record[key];
 

@@ -386,6 +386,66 @@ set
   visibility = excluded.visibility,
   uploaded_by_name = excluded.uploaded_by_name;
 
+insert into public.bank_accounts (
+  organization_id,
+  seed_key,
+  employee_id,
+  account_holder_name,
+  bank_name,
+  account_type,
+  account_last4,
+  routing_last4,
+  status,
+  is_primary,
+  provider_reference,
+  verified_at,
+  notes
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'bank-account-anika-primary',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-anika-raman'),
+    'Anika Raman',
+    'HDFC Bank',
+    'Checking',
+    '4182',
+    '0091',
+    'Verified',
+    true,
+    'seed-bank-account-anika-primary',
+    '2026-03-05T10:00:00Z',
+    'Primary payroll disbursement account.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'bank-account-priya-primary',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-priya-nair'),
+    'Priya Nair',
+    'ICICI Bank',
+    'Checking',
+    '5724',
+    '4820',
+    'Pending Verification',
+    true,
+    'seed-bank-account-priya-primary',
+    null,
+    'Awaiting penny test confirmation.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  employee_id = excluded.employee_id,
+  account_holder_name = excluded.account_holder_name,
+  bank_name = excluded.bank_name,
+  account_type = excluded.account_type,
+  account_last4 = excluded.account_last4,
+  routing_last4 = excluded.routing_last4,
+  status = excluded.status,
+  is_primary = excluded.is_primary,
+  provider_reference = excluded.provider_reference,
+  verified_at = excluded.verified_at,
+  notes = excluded.notes;
+
 insert into public.onboarding_workflows (
   organization_id,
   seed_key,

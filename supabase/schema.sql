@@ -154,6 +154,24 @@ create table if not exists public.documents (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.bank_accounts (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  employee_id uuid not null references public.employees (id) on delete cascade,
+  account_holder_name text not null,
+  bank_name text not null,
+  account_type text not null,
+  account_last4 text not null,
+  routing_last4 text not null,
+  status text not null default 'Pending Verification',
+  is_primary boolean not null default false,
+  provider_reference text not null,
+  verified_at timestamptz,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.onboarding_workflows (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -298,6 +316,17 @@ update public.documents set seed_key = gen_random_uuid()::text where seed_key is
 alter table public.documents alter column seed_key set default gen_random_uuid()::text;
 alter table public.documents alter column seed_key set not null;
 
+alter table public.bank_accounts add column if not exists seed_key text;
+update public.bank_accounts set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.bank_accounts alter column seed_key set default gen_random_uuid()::text;
+alter table public.bank_accounts alter column seed_key set not null;
+alter table public.bank_accounts add column if not exists notes text;
+alter table public.bank_accounts add column if not exists verified_at timestamptz;
+alter table public.bank_accounts add column if not exists is_primary boolean;
+update public.bank_accounts set is_primary = false where is_primary is null;
+alter table public.bank_accounts alter column is_primary set default false;
+alter table public.bank_accounts alter column is_primary set not null;
+
 alter table public.onboarding_workflows add column if not exists seed_key text;
 update public.onboarding_workflows set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.onboarding_workflows alter column seed_key set default gen_random_uuid()::text;
@@ -336,6 +365,8 @@ create index if not exists approvals_organization_id_idx on public.approvals (or
 create index if not exists approvals_entity_idx on public.approvals (entity_type, entity_id);
 create index if not exists documents_organization_id_idx on public.documents (organization_id);
 create index if not exists documents_entity_idx on public.documents (entity_type, entity_id);
+create index if not exists bank_accounts_organization_id_idx on public.bank_accounts (organization_id);
+create index if not exists bank_accounts_employee_id_idx on public.bank_accounts (employee_id);
 create index if not exists onboarding_workflows_organization_id_idx on public.onboarding_workflows (organization_id);
 create index if not exists onboarding_workflows_employee_id_idx on public.onboarding_workflows (employee_id);
 create index if not exists onboarding_tasks_organization_id_idx on public.onboarding_tasks (organization_id);
@@ -367,6 +398,11 @@ create unique index if not exists approvals_organization_seed_key_idx
   on public.approvals (organization_id, seed_key);
 create unique index if not exists documents_organization_seed_key_idx
   on public.documents (organization_id, seed_key);
+create unique index if not exists bank_accounts_organization_seed_key_idx
+  on public.bank_accounts (organization_id, seed_key);
+create unique index if not exists bank_accounts_primary_employee_idx
+  on public.bank_accounts (employee_id)
+  where is_primary;
 create unique index if not exists onboarding_workflows_organization_seed_key_idx
   on public.onboarding_workflows (organization_id, seed_key);
 create unique index if not exists onboarding_tasks_organization_seed_key_idx
@@ -396,6 +432,7 @@ alter table public.time_entries enable row level security;
 alter table public.leave_requests enable row level security;
 alter table public.approvals enable row level security;
 alter table public.documents enable row level security;
+alter table public.bank_accounts enable row level security;
 alter table public.onboarding_workflows enable row level security;
 alter table public.onboarding_tasks enable row level security;
 alter table public.announcements enable row level security;
@@ -688,6 +725,35 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete documents in their organization" on public.documents;
 create policy "users can delete documents in their organization"
 on public.documents
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read bank accounts in their organization" on public.bank_accounts;
+create policy "users can read bank accounts in their organization"
+on public.bank_accounts
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert bank accounts in their organization" on public.bank_accounts;
+create policy "users can insert bank accounts in their organization"
+on public.bank_accounts
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update bank accounts in their organization" on public.bank_accounts;
+create policy "users can update bank accounts in their organization"
+on public.bank_accounts
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete bank accounts in their organization" on public.bank_accounts;
+create policy "users can delete bank accounts in their organization"
+on public.bank_accounts
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

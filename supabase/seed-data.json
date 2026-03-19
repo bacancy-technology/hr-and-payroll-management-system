@@ -1,0 +1,247 @@
+{
+  "organization": {
+    "name": "Northstar People Ops",
+    "industry": "SaaS",
+    "headquarters": "Bengaluru"
+  },
+  "departments": [
+    {
+      "seedKey": "department-people",
+      "name": "People",
+      "code": "PEOPLE",
+      "leadName": "Anika Raman"
+    },
+    {
+      "seedKey": "department-engineering",
+      "name": "Engineering",
+      "code": "ENG",
+      "leadName": "Mina Carter"
+    },
+    {
+      "seedKey": "department-finance",
+      "name": "Finance",
+      "code": "FIN",
+      "leadName": "Priya Nair"
+    },
+    {
+      "seedKey": "department-design",
+      "name": "Design",
+      "code": "DES",
+      "leadName": "Daniel Moss"
+    }
+  ],
+  "employees": [
+    {
+      "seedKey": "employee-anika-raman",
+      "fullName": "Anika Raman",
+      "role": "VP, People Operations",
+      "department": "People",
+      "status": "Active",
+      "location": "Bengaluru",
+      "salary": 148000,
+      "startDate": "2022-05-09",
+      "managerName": "Executive Team",
+      "nextReviewAt": "2026-04-12"
+    },
+    {
+      "seedKey": "employee-jordan-blake",
+      "fullName": "Jordan Blake",
+      "role": "Senior Backend Engineer",
+      "department": "Engineering",
+      "status": "Active",
+      "location": "Remote",
+      "salary": 132000,
+      "startDate": "2023-01-16",
+      "managerName": "Mina Carter",
+      "nextReviewAt": "2026-05-03"
+    },
+    {
+      "seedKey": "employee-priya-nair",
+      "fullName": "Priya Nair",
+      "role": "Payroll Specialist",
+      "department": "Finance",
+      "status": "Active",
+      "location": "Mumbai",
+      "salary": 96000,
+      "startDate": "2021-11-22",
+      "managerName": "Anika Raman",
+      "nextReviewAt": "2026-04-28"
+    },
+    {
+      "seedKey": "employee-marcus-lee",
+      "fullName": "Marcus Lee",
+      "role": "Product Designer",
+      "department": "Design",
+      "status": "On Leave",
+      "location": "Singapore",
+      "salary": 104000,
+      "startDate": "2024-02-05",
+      "managerName": "Daniel Moss",
+      "nextReviewAt": "2026-06-14"
+    },
+    {
+      "seedKey": "employee-elena-torres",
+      "fullName": "Elena Torres",
+      "role": "Talent Partner",
+      "department": "People",
+      "status": "Active",
+      "location": "Barcelona",
+      "salary": 92000,
+      "startDate": "2023-08-14",
+      "managerName": "Anika Raman",
+      "nextReviewAt": "2026-04-19"
+    },
+    {
+      "seedKey": "employee-noah-kim",
+      "fullName": "Noah Kim",
+      "role": "Finance Analyst",
+      "department": "Finance",
+      "status": "In Review",
+      "location": "Seoul",
+      "salary": 88000,
+      "startDate": "2025-01-06",
+      "managerName": "Priya Nair",
+      "nextReviewAt": "2026-04-07"
+    }
+  ],
+  "payrollRuns": [
+    {
+      "seedKey": "payroll-run-2026-03",
+      "periodLabel": "March 2026",
+      "payDate": "2026-03-29",
+      "status": "Processing",
+      "employeeCount": 62,
+      "totalAmount": 412840,
+      "varianceNote": "+2.3% vs last month"
+    },
+    {
+      "seedKey": "payroll-run-2026-02",
+      "periodLabel": "February 2026",
+      "payDate": "2026-02-27",
+      "status": "Paid",
+      "employeeCount": 61,
+      "totalAmount": 403620,
+      "varianceNote": "+1 new starter"
+    },
+    {
+      "seedKey": "payroll-run-2026-01",
+      "periodLabel": "January 2026",
+      "payDate": "2026-01-30",
+      "status": "Paid",
+      "employeeCount": 60,
+      "totalAmount": 397200,
+      "varianceNote": "No payroll exceptions"
+    }
+  ],
+  "payPeriods": [
+    {
+      "seedKey": "pay-period-2026-03",
+      "label": "March 2026",
+      "startDate": "2026-03-01",
+      "endDate": "2026-03-15",
+      "payDate": "2026-03-20",
+      "status": "Open"
+    },
+    {
+      "seedKey": "pay-period-2026-03b",
+      "label": "Late March 2026",
+      "startDate": "2026-03-16",
+      "endDate": "2026-03-31",
+      "payDate": "2026-04-04",
+      "status": "Scheduled"
+    }
+  ],
+  "timeEntries": [
+    {
+      "seedKey": "time-entry-anika-2026-03-18",
+      "employeeName": "Anika Raman",
+      "payPeriodLabel": "Late March 2026",
+      "workDate": "2026-03-18",
+      "clockInAt": "2026-03-18T09:02:00Z",
+      "clockOutAt": "2026-03-18T17:46:00Z",
+      "breakMinutes": 45,
+      "hoursWorked": 7.98,
+      "overtimeHours": 0,
+      "status": "Approved"
+    },
+    {
+      "seedKey": "time-entry-jordan-2026-03-18",
+      "employeeName": "Jordan Blake",
+      "payPeriodLabel": "Late March 2026",
+      "workDate": "2026-03-18",
+      "clockInAt": "2026-03-18T08:31:00Z",
+      "clockOutAt": "2026-03-18T18:12:00Z",
+      "breakMinutes": 50,
+      "hoursWorked": 8.85,
+      "overtimeHours": 0.85,
+      "status": "Approved"
+    },
+    {
+      "seedKey": "time-entry-priya-2026-03-18",
+      "employeeName": "Priya Nair",
+      "payPeriodLabel": "Late March 2026",
+      "workDate": "2026-03-18",
+      "clockInAt": "2026-03-18T09:14:00Z",
+      "clockOutAt": "2026-03-18T18:01:00Z",
+      "breakMinutes": 35,
+      "hoursWorked": 8.2,
+      "overtimeHours": 0.2,
+      "status": "Submitted"
+    }
+  ],
+  "leaveRequests": [
+    {
+      "seedKey": "leave-request-marcus-lee",
+      "employeeName": "Marcus Lee",
+      "type": "Annual Leave",
+      "startDate": "2026-03-21",
+      "endDate": "2026-03-28",
+      "days": 6,
+      "status": "Approved",
+      "approverName": "Daniel Moss"
+    },
+    {
+      "seedKey": "leave-request-elena-torres",
+      "employeeName": "Elena Torres",
+      "type": "Work From Anywhere",
+      "startDate": "2026-04-08",
+      "endDate": "2026-04-18",
+      "days": 7,
+      "status": "Pending",
+      "approverName": "Anika Raman"
+    },
+    {
+      "seedKey": "leave-request-noah-kim",
+      "employeeName": "Noah Kim",
+      "type": "Family Care",
+      "startDate": "2026-03-26",
+      "endDate": "2026-03-27",
+      "days": 2,
+      "status": "In Review",
+      "approverName": "Priya Nair"
+    }
+  ],
+  "announcements": [
+    {
+      "seedKey": "announcement-q2-review",
+      "label": "Performance",
+      "title": "Q2 compensation review window opens next Monday",
+      "body": "Managers can finalize performance inputs directly in the workspace before April 8.",
+      "displayOrder": 1
+    },
+    {
+      "seedKey": "announcement-payroll-exception-rate",
+      "label": "Payroll",
+      "title": "Payroll exception rate dropped below 1%",
+      "body": "Automated checks on reimbursements and bonuses are clearing with fewer manual interventions.",
+      "displayOrder": 2
+    },
+    {
+      "seedKey": "announcement-onboarding-playbook",
+      "label": "People Ops",
+      "title": "Hybrid onboarding playbook was refreshed",
+      "body": "The new checklist shortens time-to-setup for global hires and syncs with IT handoffs.",
+      "displayOrder": 3
+    }
+  ]
+}

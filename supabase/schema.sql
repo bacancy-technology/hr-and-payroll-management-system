@@ -1,0 +1,522 @@
+create extension if not exists pgcrypto;
+
+create table if not exists public.organizations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  industry text,
+  headquarters text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users (id) on delete cascade,
+  organization_id uuid references public.organizations (id) on delete set null,
+  full_name text not null,
+  email text not null,
+  role text not null default 'HR Admin',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.departments (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  name text not null,
+  code text,
+  lead_name text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.employees (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  department_id uuid references public.departments (id) on delete set null,
+  full_name text not null,
+  email text not null,
+  role text not null,
+  status text not null default 'Active',
+  location text not null,
+  salary numeric(12, 2) not null check (salary >= 0),
+  start_date date not null,
+  manager_name text not null,
+  next_review_at date not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.payroll_runs (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  period_label text not null,
+  pay_date date not null,
+  status text not null default 'Scheduled',
+  employee_count integer not null check (employee_count >= 0),
+  total_amount numeric(12, 2) not null check (total_amount >= 0),
+  variance_note text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.pay_periods (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  label text not null,
+  start_date date not null,
+  end_date date not null,
+  pay_date date not null,
+  status text not null default 'Open',
+  created_at timestamptz not null default now(),
+  check (end_date >= start_date)
+);
+
+create table if not exists public.time_entries (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  employee_id uuid not null references public.employees (id) on delete cascade,
+  pay_period_id uuid references public.pay_periods (id) on delete set null,
+  work_date date not null,
+  clock_in_at timestamptz,
+  clock_out_at timestamptz,
+  break_minutes integer not null default 0 check (break_minutes >= 0),
+  hours_worked numeric(6, 2) not null default 0 check (hours_worked >= 0),
+  overtime_hours numeric(6, 2) not null default 0 check (overtime_hours >= 0),
+  status text not null default 'Draft',
+  notes text,
+  created_at timestamptz not null default now(),
+  check (clock_out_at is null or clock_in_at is null or clock_out_at >= clock_in_at)
+);
+
+create table if not exists public.leave_requests (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  employee_name text not null,
+  type text not null,
+  start_date date not null,
+  end_date date not null,
+  days integer not null check (days >= 0),
+  status text not null default 'Pending',
+  approver_name text not null,
+  created_at timestamptz not null default now(),
+  check (end_date >= start_date)
+);
+
+create table if not exists public.announcements (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  label text not null,
+  title text not null,
+  body text not null,
+  display_order integer not null default 1,
+  created_at timestamptz not null default now()
+);
+
+alter table public.departments add column if not exists seed_key text;
+update public.departments set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.departments alter column seed_key set default gen_random_uuid()::text;
+alter table public.departments alter column seed_key set not null;
+alter table public.departments add column if not exists code text;
+alter table public.departments add column if not exists lead_name text;
+
+alter table public.employees add column if not exists seed_key text;
+update public.employees set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.employees alter column seed_key set default gen_random_uuid()::text;
+alter table public.employees alter column seed_key set not null;
+alter table public.employees add column if not exists department_id uuid references public.departments (id) on delete set null;
+alter table public.employees add column if not exists email text;
+update public.employees set email = concat(lower(replace(full_name, ' ', '.')), '@pulsehr.app') where coalesce(email, '') = '';
+alter table public.employees alter column email set not null;
+alter table public.employees alter column email drop default;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'employees'
+      and column_name = 'department'
+  ) then
+    insert into public.departments (organization_id, name, code, lead_name)
+    select distinct
+      employees.organization_id,
+      employees.department,
+      upper(left(regexp_replace(employees.department, '[^a-zA-Z0-9]+', '', 'g'), 6)),
+      null
+    from public.employees as employees
+    left join public.departments as departments
+      on departments.organization_id = employees.organization_id
+     and departments.name = employees.department
+    where employees.department is not null
+      and employees.department <> ''
+      and departments.id is null;
+
+    update public.employees
+    set department_id = public.departments.id
+    from public.departments
+    where public.employees.department_id is null
+      and public.employees.organization_id = public.departments.organization_id
+      and public.employees.department = public.departments.name;
+  end if;
+end
+$$;
+
+alter table public.employees drop column if exists department;
+
+alter table public.payroll_runs add column if not exists seed_key text;
+update public.payroll_runs set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.payroll_runs alter column seed_key set default gen_random_uuid()::text;
+alter table public.payroll_runs alter column seed_key set not null;
+
+alter table public.pay_periods add column if not exists seed_key text;
+update public.pay_periods set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.pay_periods alter column seed_key set default gen_random_uuid()::text;
+alter table public.pay_periods alter column seed_key set not null;
+
+alter table public.time_entries add column if not exists seed_key text;
+update public.time_entries set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.time_entries alter column seed_key set default gen_random_uuid()::text;
+alter table public.time_entries alter column seed_key set not null;
+alter table public.time_entries add column if not exists pay_period_id uuid references public.pay_periods (id) on delete set null;
+alter table public.time_entries add column if not exists notes text;
+
+alter table public.leave_requests add column if not exists seed_key text;
+update public.leave_requests set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.leave_requests alter column seed_key set default gen_random_uuid()::text;
+alter table public.leave_requests alter column seed_key set not null;
+
+alter table public.announcements add column if not exists seed_key text;
+update public.announcements set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.announcements alter column seed_key set default gen_random_uuid()::text;
+alter table public.announcements alter column seed_key set not null;
+
+create index if not exists departments_organization_id_idx on public.departments (organization_id);
+create index if not exists employees_organization_id_idx on public.employees (organization_id);
+create index if not exists payroll_runs_organization_id_idx on public.payroll_runs (organization_id);
+create index if not exists pay_periods_organization_id_idx on public.pay_periods (organization_id);
+create index if not exists time_entries_organization_id_idx on public.time_entries (organization_id);
+create index if not exists time_entries_employee_id_idx on public.time_entries (employee_id);
+create index if not exists leave_requests_organization_id_idx on public.leave_requests (organization_id);
+create index if not exists announcements_organization_id_idx on public.announcements (organization_id);
+create index if not exists profiles_organization_id_idx on public.profiles (organization_id);
+
+create unique index if not exists departments_organization_seed_key_idx
+  on public.departments (organization_id, seed_key);
+create unique index if not exists departments_organization_name_idx
+  on public.departments (organization_id, name);
+create unique index if not exists employees_organization_seed_key_idx
+  on public.employees (organization_id, seed_key);
+create unique index if not exists employees_organization_email_idx
+  on public.employees (organization_id, email);
+create unique index if not exists payroll_runs_organization_seed_key_idx
+  on public.payroll_runs (organization_id, seed_key);
+create unique index if not exists pay_periods_organization_seed_key_idx
+  on public.pay_periods (organization_id, seed_key);
+create unique index if not exists time_entries_organization_seed_key_idx
+  on public.time_entries (organization_id, seed_key);
+create unique index if not exists leave_requests_organization_seed_key_idx
+  on public.leave_requests (organization_id, seed_key);
+create unique index if not exists announcements_organization_seed_key_idx
+  on public.announcements (organization_id, seed_key);
+
+create or replace function public.current_user_organization_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select organization_id
+  from public.profiles
+  where id = auth.uid();
+$$;
+
+alter table public.profiles enable row level security;
+alter table public.departments enable row level security;
+alter table public.employees enable row level security;
+alter table public.payroll_runs enable row level security;
+alter table public.pay_periods enable row level security;
+alter table public.time_entries enable row level security;
+alter table public.leave_requests enable row level security;
+alter table public.announcements enable row level security;
+alter table public.organizations enable row level security;
+
+drop policy if exists "users can read own profile" on public.profiles;
+create policy "users can read own profile"
+on public.profiles
+for select
+to authenticated
+using (auth.uid() = id);
+
+drop policy if exists "users can update own profile" on public.profiles;
+create policy "users can update own profile"
+on public.profiles
+for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);
+
+drop policy if exists "users can read own organization" on public.organizations;
+create policy "users can read own organization"
+on public.organizations
+for select
+to authenticated
+using (id = public.current_user_organization_id());
+
+drop policy if exists "users can update own organization" on public.organizations;
+create policy "users can update own organization"
+on public.organizations
+for update
+to authenticated
+using (id = public.current_user_organization_id())
+with check (id = public.current_user_organization_id());
+
+drop policy if exists "users can read employees in their organization" on public.employees;
+create policy "users can read employees in their organization"
+on public.employees
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert employees in their organization" on public.employees;
+create policy "users can insert employees in their organization"
+on public.employees
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update employees in their organization" on public.employees;
+create policy "users can update employees in their organization"
+on public.employees
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete employees in their organization" on public.employees;
+create policy "users can delete employees in their organization"
+on public.employees
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read departments in their organization" on public.departments;
+create policy "users can read departments in their organization"
+on public.departments
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert departments in their organization" on public.departments;
+create policy "users can insert departments in their organization"
+on public.departments
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update departments in their organization" on public.departments;
+create policy "users can update departments in their organization"
+on public.departments
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete departments in their organization" on public.departments;
+create policy "users can delete departments in their organization"
+on public.departments
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read payroll runs in their organization" on public.payroll_runs;
+create policy "users can read payroll runs in their organization"
+on public.payroll_runs
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert payroll runs in their organization" on public.payroll_runs;
+create policy "users can insert payroll runs in their organization"
+on public.payroll_runs
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update payroll runs in their organization" on public.payroll_runs;
+create policy "users can update payroll runs in their organization"
+on public.payroll_runs
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete payroll runs in their organization" on public.payroll_runs;
+create policy "users can delete payroll runs in their organization"
+on public.payroll_runs
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read pay periods in their organization" on public.pay_periods;
+create policy "users can read pay periods in their organization"
+on public.pay_periods
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert pay periods in their organization" on public.pay_periods;
+create policy "users can insert pay periods in their organization"
+on public.pay_periods
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update pay periods in their organization" on public.pay_periods;
+create policy "users can update pay periods in their organization"
+on public.pay_periods
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete pay periods in their organization" on public.pay_periods;
+create policy "users can delete pay periods in their organization"
+on public.pay_periods
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read time entries in their organization" on public.time_entries;
+create policy "users can read time entries in their organization"
+on public.time_entries
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert time entries in their organization" on public.time_entries;
+create policy "users can insert time entries in their organization"
+on public.time_entries
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update time entries in their organization" on public.time_entries;
+create policy "users can update time entries in their organization"
+on public.time_entries
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete time entries in their organization" on public.time_entries;
+create policy "users can delete time entries in their organization"
+on public.time_entries
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read leave requests in their organization" on public.leave_requests;
+create policy "users can read leave requests in their organization"
+on public.leave_requests
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert leave requests in their organization" on public.leave_requests;
+create policy "users can insert leave requests in their organization"
+on public.leave_requests
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update leave requests in their organization" on public.leave_requests;
+create policy "users can update leave requests in their organization"
+on public.leave_requests
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete leave requests in their organization" on public.leave_requests;
+create policy "users can delete leave requests in their organization"
+on public.leave_requests
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read announcements in their organization" on public.announcements;
+create policy "users can read announcements in their organization"
+on public.announcements
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert announcements in their organization" on public.announcements;
+create policy "users can insert announcements in their organization"
+on public.announcements
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update announcements in their organization" on public.announcements;
+create policy "users can update announcements in their organization"
+on public.announcements
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete announcements in their organization" on public.announcements;
+create policy "users can delete announcements in their organization"
+on public.announcements
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  default_org_id uuid;
+begin
+  select id into default_org_id
+  from public.organizations
+  order by created_at asc
+  limit 1;
+
+  if default_org_id is null then
+    insert into public.organizations (name, industry, headquarters)
+    values ('Northstar People Ops', 'SaaS', 'Bengaluru')
+    returning id into default_org_id;
+  end if;
+
+  insert into public.profiles (id, organization_id, full_name, email, role)
+  values (
+    new.id,
+    default_org_id,
+    coalesce(new.raw_user_meta_data ->> 'full_name', split_part(coalesce(new.email, 'admin@pulsehr.app'), '@', 1)),
+    coalesce(new.email, 'admin@pulsehr.app'),
+    'HR Admin'
+  )
+  on conflict (id) do update
+  set
+    organization_id = excluded.organization_id,
+    full_name = excluded.full_name,
+    email = excluded.email;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute procedure public.handle_new_user();

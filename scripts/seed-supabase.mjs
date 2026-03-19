@@ -1,0 +1,272 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { createClient } from "@supabase/supabase-js";
+
+const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(currentDirectory, "..");
+const seedDataPath = path.join(projectRoot, "supabase", "seed-data.json");
+
+function readRequiredEnv(name) {
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+
+  return value;
+}
+
+async function loadSeedData() {
+  const content = await readFile(seedDataPath, "utf8");
+
+  return JSON.parse(content);
+}
+
+async function main() {
+  const supabaseUrl = readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const supabaseAnonKey = readRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const seedEmail = readRequiredEnv("SUPABASE_SEED_EMAIL");
+  const seedPassword = readRequiredEnv("SUPABASE_SEED_PASSWORD");
+  const seedData = await loadSeedData();
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: seedEmail,
+    password: seedPassword,
+  });
+
+  if (signInError) {
+    throw new Error(`Failed to authenticate seed user: ${signInError.message}`);
+  }
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error(userError?.message ?? "Seed user session could not be established.");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(`Failed to load seed user profile: ${profileError.message}`);
+  }
+
+  if (!profile?.organization_id) {
+    throw new Error("The seed user does not have an organization assigned in public.profiles.");
+  }
+
+  const organizationId = profile.organization_id;
+
+  const { error: organizationError } = await supabase
+    .from("organizations")
+    .update({
+      name: seedData.organization.name,
+      industry: seedData.organization.industry,
+      headquarters: seedData.organization.headquarters,
+    })
+    .eq("id", organizationId);
+
+  if (organizationError) {
+    throw new Error(`Failed to update organization: ${organizationError.message}`);
+  }
+
+  const departments = seedData.departments.map((department) => ({
+    organization_id: organizationId,
+    seed_key: department.seedKey,
+    name: department.name,
+    code: department.code,
+    lead_name: department.leadName,
+  }));
+
+  const { error: departmentsError } = await supabase.from("departments").upsert(departments, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (departmentsError) {
+    throw new Error(`Failed to seed departments: ${departmentsError.message}`);
+  }
+
+  const { data: departmentRows, error: departmentRowsError } = await supabase
+    .from("departments")
+    .select("id, name")
+    .eq("organization_id", organizationId);
+
+  if (departmentRowsError) {
+    throw new Error(`Failed to load departments after seeding: ${departmentRowsError.message}`);
+  }
+
+  const departmentIdByName = new Map(departmentRows.map((department) => [department.name, department.id]));
+
+  const employees = seedData.employees.map((employee) => ({
+    organization_id: organizationId,
+    seed_key: employee.seedKey,
+    department_id: departmentIdByName.get(employee.department) ?? null,
+    full_name: employee.fullName,
+    email: `${employee.fullName.toLowerCase().replaceAll(" ", ".")}@pulsehr.app`,
+    role: employee.role,
+    status: employee.status,
+    location: employee.location,
+    salary: employee.salary,
+    start_date: employee.startDate,
+    manager_name: employee.managerName,
+    next_review_at: employee.nextReviewAt,
+  }));
+
+  const payrollRuns = seedData.payrollRuns.map((run) => ({
+    organization_id: organizationId,
+    seed_key: run.seedKey,
+    period_label: run.periodLabel,
+    pay_date: run.payDate,
+    status: run.status,
+    employee_count: run.employeeCount,
+    total_amount: run.totalAmount,
+    variance_note: run.varianceNote,
+  }));
+
+  const payPeriods = seedData.payPeriods.map((period) => ({
+    organization_id: organizationId,
+    seed_key: period.seedKey,
+    label: period.label,
+    start_date: period.startDate,
+    end_date: period.endDate,
+    pay_date: period.payDate,
+    status: period.status,
+  }));
+
+  const employeeIdByName = new Map(
+    seedData.employees.map((employee) => [employee.fullName, employee.seedKey]),
+  );
+
+  const leaveRequests = seedData.leaveRequests.map((request) => ({
+    organization_id: organizationId,
+    seed_key: request.seedKey,
+    employee_name: request.employeeName,
+    type: request.type,
+    start_date: request.startDate,
+    end_date: request.endDate,
+    days: request.days,
+    status: request.status,
+    approver_name: request.approverName,
+  }));
+
+  const announcements = seedData.announcements.map((announcement) => ({
+    organization_id: organizationId,
+    seed_key: announcement.seedKey,
+    label: announcement.label,
+    title: announcement.title,
+    body: announcement.body,
+    display_order: announcement.displayOrder,
+  }));
+
+  const [{ error: employeesError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: announcementsError }] =
+    await Promise.all([
+      supabase.from("employees").upsert(employees, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("payroll_runs").upsert(payrollRuns, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("pay_periods").upsert(payPeriods, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("leave_requests").upsert(leaveRequests, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("announcements").upsert(announcements, {
+        onConflict: "organization_id,seed_key",
+      }),
+    ]);
+
+  if (employeesError) {
+    throw new Error(`Failed to seed employees: ${employeesError.message}`);
+  }
+
+  if (payrollError) {
+    throw new Error(`Failed to seed payroll runs: ${payrollError.message}`);
+  }
+
+  if (payPeriodsError) {
+    throw new Error(`Failed to seed pay periods: ${payPeriodsError.message}`);
+  }
+
+  if (leaveError) {
+    throw new Error(`Failed to seed leave requests: ${leaveError.message}`);
+  }
+
+  if (announcementsError) {
+    throw new Error(`Failed to seed announcements: ${announcementsError.message}`);
+  }
+
+  const { data: employeeRows, error: employeeRowsError } = await supabase
+    .from("employees")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (employeeRowsError) {
+    throw new Error(`Failed to load employees after seeding: ${employeeRowsError.message}`);
+  }
+
+  const { data: payPeriodRows, error: payPeriodRowsError } = await supabase
+    .from("pay_periods")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (payPeriodRowsError) {
+    throw new Error(`Failed to load pay periods after seeding: ${payPeriodRowsError.message}`);
+  }
+
+  const employeeIdBySeedKey = new Map(employeeRows.map((employee) => [employee.seed_key, employee.id]));
+  const payPeriodIdBySeedKey = new Map(payPeriodRows.map((period) => [period.seed_key, period.id]));
+  const payPeriodSeedKeyByLabel = new Map(seedData.payPeriods.map((period) => [period.label, period.seedKey]));
+
+  const timeEntries = seedData.timeEntries.map((entry) => ({
+    organization_id: organizationId,
+    seed_key: entry.seedKey,
+    employee_id: employeeIdBySeedKey.get(employeeIdByName.get(entry.employeeName)) ?? null,
+    pay_period_id: payPeriodIdBySeedKey.get(payPeriodSeedKeyByLabel.get(entry.payPeriodLabel)) ?? null,
+    work_date: entry.workDate,
+    clock_in_at: entry.clockInAt,
+    clock_out_at: entry.clockOutAt,
+    break_minutes: entry.breakMinutes,
+    hours_worked: entry.hoursWorked,
+    overtime_hours: entry.overtimeHours,
+    status: entry.status,
+  }));
+
+  const { error: timeEntriesError } = await supabase.from("time_entries").upsert(timeEntries, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (timeEntriesError) {
+    throw new Error(`Failed to seed time entries: ${timeEntriesError.message}`);
+  }
+
+  console.log(`Seeded organization ${organizationId}`);
+  console.log(`Departments: ${departments.length}`);
+  console.log(`Employees: ${employees.length}`);
+  console.log(`Payroll runs: ${payrollRuns.length}`);
+  console.log(`Pay periods: ${payPeriods.length}`);
+  console.log(`Time entries: ${timeEntries.length}`);
+  console.log(`Leave requests: ${leaveRequests.length}`);
+  console.log(`Announcements: ${announcements.length}`);
+}
+
+main().catch((error) => {
+  console.error(error.message);
+  process.exitCode = 1;
+});

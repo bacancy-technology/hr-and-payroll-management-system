@@ -154,6 +154,36 @@ create table if not exists public.documents (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.onboarding_workflows (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  employee_id uuid references public.employees (id) on delete set null,
+  employee_name text not null,
+  owner_name text not null,
+  status text not null default 'Pending',
+  start_date date not null,
+  target_date date not null,
+  notes text,
+  created_at timestamptz not null default now(),
+  check (target_date >= start_date)
+);
+
+create table if not exists public.onboarding_tasks (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  workflow_id uuid not null references public.onboarding_workflows (id) on delete cascade,
+  title text not null,
+  category text not null,
+  assigned_to_name text not null,
+  status text not null default 'Pending',
+  due_date date not null,
+  completed_at timestamptz,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.announcements (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -268,6 +298,26 @@ update public.documents set seed_key = gen_random_uuid()::text where seed_key is
 alter table public.documents alter column seed_key set default gen_random_uuid()::text;
 alter table public.documents alter column seed_key set not null;
 
+alter table public.onboarding_workflows add column if not exists seed_key text;
+update public.onboarding_workflows set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.onboarding_workflows alter column seed_key set default gen_random_uuid()::text;
+alter table public.onboarding_workflows alter column seed_key set not null;
+alter table public.onboarding_workflows add column if not exists employee_id uuid references public.employees (id) on delete set null;
+alter table public.onboarding_workflows add column if not exists notes text;
+update public.onboarding_workflows
+set employee_id = employees.id
+from public.employees as employees
+where public.onboarding_workflows.employee_id is null
+  and public.onboarding_workflows.organization_id = employees.organization_id
+  and public.onboarding_workflows.employee_name = employees.full_name;
+
+alter table public.onboarding_tasks add column if not exists seed_key text;
+update public.onboarding_tasks set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.onboarding_tasks alter column seed_key set default gen_random_uuid()::text;
+alter table public.onboarding_tasks alter column seed_key set not null;
+alter table public.onboarding_tasks add column if not exists completed_at timestamptz;
+alter table public.onboarding_tasks add column if not exists notes text;
+
 alter table public.announcements add column if not exists seed_key text;
 update public.announcements set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.announcements alter column seed_key set default gen_random_uuid()::text;
@@ -286,6 +336,10 @@ create index if not exists approvals_organization_id_idx on public.approvals (or
 create index if not exists approvals_entity_idx on public.approvals (entity_type, entity_id);
 create index if not exists documents_organization_id_idx on public.documents (organization_id);
 create index if not exists documents_entity_idx on public.documents (entity_type, entity_id);
+create index if not exists onboarding_workflows_organization_id_idx on public.onboarding_workflows (organization_id);
+create index if not exists onboarding_workflows_employee_id_idx on public.onboarding_workflows (employee_id);
+create index if not exists onboarding_tasks_organization_id_idx on public.onboarding_tasks (organization_id);
+create index if not exists onboarding_tasks_workflow_id_idx on public.onboarding_tasks (workflow_id);
 create index if not exists announcements_organization_id_idx on public.announcements (organization_id);
 create index if not exists profiles_organization_id_idx on public.profiles (organization_id);
 
@@ -313,6 +367,10 @@ create unique index if not exists approvals_organization_seed_key_idx
   on public.approvals (organization_id, seed_key);
 create unique index if not exists documents_organization_seed_key_idx
   on public.documents (organization_id, seed_key);
+create unique index if not exists onboarding_workflows_organization_seed_key_idx
+  on public.onboarding_workflows (organization_id, seed_key);
+create unique index if not exists onboarding_tasks_organization_seed_key_idx
+  on public.onboarding_tasks (organization_id, seed_key);
 create unique index if not exists announcements_organization_seed_key_idx
   on public.announcements (organization_id, seed_key);
 
@@ -338,6 +396,8 @@ alter table public.time_entries enable row level security;
 alter table public.leave_requests enable row level security;
 alter table public.approvals enable row level security;
 alter table public.documents enable row level security;
+alter table public.onboarding_workflows enable row level security;
+alter table public.onboarding_tasks enable row level security;
 alter table public.announcements enable row level security;
 alter table public.organizations enable row level security;
 
@@ -628,6 +688,64 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete documents in their organization" on public.documents;
 create policy "users can delete documents in their organization"
 on public.documents
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read onboarding workflows in their organization" on public.onboarding_workflows;
+create policy "users can read onboarding workflows in their organization"
+on public.onboarding_workflows
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert onboarding workflows in their organization" on public.onboarding_workflows;
+create policy "users can insert onboarding workflows in their organization"
+on public.onboarding_workflows
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update onboarding workflows in their organization" on public.onboarding_workflows;
+create policy "users can update onboarding workflows in their organization"
+on public.onboarding_workflows
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete onboarding workflows in their organization" on public.onboarding_workflows;
+create policy "users can delete onboarding workflows in their organization"
+on public.onboarding_workflows
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read onboarding tasks in their organization" on public.onboarding_tasks;
+create policy "users can read onboarding tasks in their organization"
+on public.onboarding_tasks
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert onboarding tasks in their organization" on public.onboarding_tasks;
+create policy "users can insert onboarding tasks in their organization"
+on public.onboarding_tasks
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update onboarding tasks in their organization" on public.onboarding_tasks;
+create policy "users can update onboarding tasks in their organization"
+on public.onboarding_tasks
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete onboarding tasks in their organization" on public.onboarding_tasks;
+create policy "users can delete onboarding tasks in their organization"
+on public.onboarding_tasks
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

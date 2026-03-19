@@ -386,6 +386,110 @@ set
   visibility = excluded.visibility,
   uploaded_by_name = excluded.uploaded_by_name;
 
+insert into public.onboarding_workflows (
+  organization_id,
+  seed_key,
+  employee_id,
+  employee_name,
+  owner_name,
+  status,
+  start_date,
+  target_date,
+  notes
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'onboarding-elena-torres',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-elena-torres'),
+    'Elena Torres',
+    'Anika Raman',
+    'In Progress',
+    '2026-03-10',
+    '2026-03-24',
+    'Cross-functional setup is in flight for the Barcelona team handoff.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'onboarding-noah-kim',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-noah-kim'),
+    'Noah Kim',
+    'Priya Nair',
+    'Pending',
+    '2026-03-18',
+    '2026-04-01',
+    'Pending payroll and finance system enrollment.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  employee_id = excluded.employee_id,
+  employee_name = excluded.employee_name,
+  owner_name = excluded.owner_name,
+  status = excluded.status,
+  start_date = excluded.start_date,
+  target_date = excluded.target_date,
+  notes = excluded.notes;
+
+insert into public.onboarding_tasks (
+  organization_id,
+  seed_key,
+  workflow_id,
+  title,
+  category,
+  assigned_to_name,
+  status,
+  due_date,
+  completed_at,
+  notes
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'onboarding-task-elena-offer',
+    (select id from public.onboarding_workflows where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'onboarding-elena-torres'),
+    'Collect signed offer letter',
+    'Documents',
+    'Elena Torres',
+    'Completed',
+    '2026-03-12',
+    '2026-03-12T15:00:00Z',
+    'Signed copy received and stored in the employee document folder.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'onboarding-task-elena-it',
+    (select id from public.onboarding_workflows where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'onboarding-elena-torres'),
+    'Provision laptop and Slack access',
+    'IT',
+    'Anika Raman',
+    'In Progress',
+    '2026-03-20',
+    null,
+    'IT equipment has shipped and access setup is underway.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'onboarding-task-noah-tax',
+    (select id from public.onboarding_workflows where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'onboarding-noah-kim'),
+    'Submit tax and bank details',
+    'Payroll',
+    'Noah Kim',
+    'Pending',
+    '2026-03-22',
+    null,
+    'Awaiting employee completion in the self-service workflow.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  workflow_id = excluded.workflow_id,
+  title = excluded.title,
+  category = excluded.category,
+  assigned_to_name = excluded.assigned_to_name,
+  status = excluded.status,
+  due_date = excluded.due_date,
+  completed_at = excluded.completed_at,
+  notes = excluded.notes;
+
 insert into public.announcements (
   organization_id,
   seed_key,

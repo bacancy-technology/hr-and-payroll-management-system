@@ -323,6 +323,53 @@
       "visibility": "Internal"
     }
   ],
+  "onboardingWorkflows": [
+    {
+      "seedKey": "onboarding-elena-torres",
+      "employeeName": "Elena Torres",
+      "ownerName": "Anika Raman",
+      "status": "In Progress",
+      "startDate": "2026-03-10",
+      "targetDate": "2026-03-24"
+    },
+    {
+      "seedKey": "onboarding-noah-kim",
+      "employeeName": "Noah Kim",
+      "ownerName": "Priya Nair",
+      "status": "Pending",
+      "startDate": "2026-03-18",
+      "targetDate": "2026-04-01"
+    }
+  ],
+  "onboardingTasks": [
+    {
+      "seedKey": "onboarding-task-elena-offer",
+      "workflowSeedKey": "onboarding-elena-torres",
+      "title": "Collect signed offer letter",
+      "category": "Documents",
+      "assignedToName": "Elena Torres",
+      "status": "Completed",
+      "dueDate": "2026-03-12"
+    },
+    {
+      "seedKey": "onboarding-task-elena-it",
+      "workflowSeedKey": "onboarding-elena-torres",
+      "title": "Provision laptop and Slack access",
+      "category": "IT",
+      "assignedToName": "Anika Raman",
+      "status": "In Progress",
+      "dueDate": "2026-03-20"
+    },
+    {
+      "seedKey": "onboarding-task-noah-tax",
+      "workflowSeedKey": "onboarding-noah-kim",
+      "title": "Submit tax and bank details",
+      "category": "Payroll",
+      "assignedToName": "Noah Kim",
+      "status": "Pending",
+      "dueDate": "2026-03-22"
+    }
+  ],
   "announcements": [
     {
       "seedKey": "announcement-q2-review",

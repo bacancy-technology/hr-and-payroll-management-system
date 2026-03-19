@@ -169,6 +169,20 @@ async function main() {
     approver_name: request.approverName,
   }));
 
+  const onboardingWorkflows = (seedData.onboardingWorkflows ?? []).map((workflow) => ({
+    organization_id: organizationId,
+    seed_key: workflow.seedKey,
+    employee_id: null,
+    employee_name: workflow.employeeName,
+    owner_name: workflow.ownerName,
+    status: workflow.status,
+    start_date: workflow.startDate,
+    target_date: workflow.targetDate,
+    notes: workflow.notes ?? null,
+  }));
+
+  const onboardingTasksSeed = seedData.onboardingTasks ?? [];
+
   const announcements = seedData.announcements.map((announcement) => ({
     organization_id: organizationId,
     seed_key: announcement.seedKey,
@@ -282,6 +296,32 @@ async function main() {
     throw new Error(`Failed to update leave requests with employee references: ${leaveRequestsWithEmployeesError.message}`);
   }
 
+  const onboardingWorkflowsWithEmployeeIds = onboardingWorkflows.map((workflow) => ({
+    ...workflow,
+    employee_id: employeeIdBySeedKey.get(employeeIdByName.get(workflow.employee_name)) ?? null,
+  }));
+
+  const { error: onboardingWorkflowsError } = await supabase.from("onboarding_workflows").upsert(onboardingWorkflowsWithEmployeeIds, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (onboardingWorkflowsError) {
+    throw new Error(`Failed to seed onboarding workflows: ${onboardingWorkflowsError.message}`);
+  }
+
+  const { data: onboardingWorkflowRows, error: onboardingWorkflowRowsError } = await supabase
+    .from("onboarding_workflows")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (onboardingWorkflowRowsError) {
+    throw new Error(`Failed to load onboarding workflows after seeding: ${onboardingWorkflowRowsError.message}`);
+  }
+
+  const onboardingWorkflowIdBySeedKey = new Map(
+    onboardingWorkflowRows.map((workflow) => [workflow.seed_key, workflow.id]),
+  );
+
   const { data: leaveRequestRows, error: leaveRequestRowsError } = await supabase
     .from("leave_requests")
     .select("id, seed_key")
@@ -382,6 +422,27 @@ async function main() {
     throw new Error(`Failed to seed documents: ${documentsError.message}`);
   }
 
+  const onboardingTasks = onboardingTasksSeed.map((task) => ({
+    organization_id: organizationId,
+    seed_key: task.seedKey,
+    workflow_id: onboardingWorkflowIdBySeedKey.get(task.workflowSeedKey) ?? null,
+    title: task.title,
+    category: task.category,
+    assigned_to_name: task.assignedToName,
+    status: task.status,
+    due_date: task.dueDate,
+    completed_at: task.completedAt ?? (task.status === "Completed" ? new Date().toISOString() : null),
+    notes: task.notes ?? null,
+  }));
+
+  const { error: onboardingTasksError } = await supabase.from("onboarding_tasks").upsert(onboardingTasks, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (onboardingTasksError) {
+    throw new Error(`Failed to seed onboarding tasks: ${onboardingTasksError.message}`);
+  }
+
   console.log(`Seeded organization ${organizationId}`);
   console.log(`Departments: ${departments.length}`);
   console.log(`Employees: ${employees.length}`);
@@ -392,6 +453,8 @@ async function main() {
   console.log(`Leave requests: ${leaveRequests.length}`);
   console.log(`Approvals: ${approvals.length}`);
   console.log(`Documents: ${documents.length}`);
+  console.log(`Onboarding workflows: ${onboardingWorkflows.length}`);
+  console.log(`Onboarding tasks: ${onboardingTasks.length}`);
   console.log(`Announcements: ${announcements.length}`);
 }
 

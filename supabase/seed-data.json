@@ -221,6 +221,35 @@
       "approverName": "Priya Nair"
     }
   ],
+  "approvals": [
+    {
+      "seedKey": "approval-leave-marcus-lee",
+      "entityType": "leave_request",
+      "entitySeedKey": "leave-request-marcus-lee",
+      "requestedByName": "Marcus Lee",
+      "assignedToName": "Daniel Moss",
+      "status": "Approved",
+      "decisionNote": "Coverage is already arranged for the design review sprint."
+    },
+    {
+      "seedKey": "approval-leave-elena-torres",
+      "entityType": "leave_request",
+      "entitySeedKey": "leave-request-elena-torres",
+      "requestedByName": "Elena Torres",
+      "assignedToName": "Anika Raman",
+      "status": "Pending",
+      "decisionNote": null
+    },
+    {
+      "seedKey": "approval-leave-noah-kim",
+      "entityType": "leave_request",
+      "entitySeedKey": "leave-request-noah-kim",
+      "requestedByName": "Noah Kim",
+      "assignedToName": "Priya Nair",
+      "status": "In Review",
+      "decisionNote": "Waiting for payroll close timing confirmation."
+    }
+  ],
   "announcements": [
     {
       "seedKey": "announcement-q2-review",

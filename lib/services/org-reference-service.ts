@@ -22,6 +22,29 @@ export async function ensureEmployeeExistsInOrganization(
   }
 }
 
+export async function getEmployeeSummaryInOrganization(
+  supabase: AuthenticatedSupabaseClient,
+  organizationId: string,
+  employeeId: string,
+) {
+  const { data, error } = await supabase
+    .from("employees")
+    .select("id, full_name, email")
+    .eq("organization_id", organizationId)
+    .eq("id", employeeId)
+    .maybeSingle();
+
+  if (error) {
+    throw new ApiError(500, "Failed to load the employee reference.", error.message);
+  }
+
+  if (!data) {
+    throw new ApiError(404, "Employee not found.");
+  }
+
+  return data;
+}
+
 export async function ensurePayPeriodExistsInOrganization(
   supabase: AuthenticatedSupabaseClient,
   organizationId: string,

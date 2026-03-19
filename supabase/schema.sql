@@ -92,6 +92,7 @@ create table if not exists public.leave_requests (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
   seed_key text not null default gen_random_uuid()::text,
+  employee_id uuid references public.employees (id) on delete set null,
   employee_name text not null,
   type text not null,
   start_date date not null,
@@ -99,8 +100,23 @@ create table if not exists public.leave_requests (
   days integer not null check (days >= 0),
   status text not null default 'Pending',
   approver_name text not null,
+  notes text,
   created_at timestamptz not null default now(),
   check (end_date >= start_date)
+);
+
+create table if not exists public.approvals (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  entity_type text not null,
+  entity_id uuid not null,
+  requested_by_name text not null,
+  assigned_to_name text not null,
+  status text not null default 'Pending',
+  decision_note text,
+  decided_at timestamptz,
+  created_at timestamptz not null default now()
 );
 
 create table if not exists public.announcements (
@@ -187,6 +203,21 @@ alter table public.leave_requests add column if not exists seed_key text;
 update public.leave_requests set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.leave_requests alter column seed_key set default gen_random_uuid()::text;
 alter table public.leave_requests alter column seed_key set not null;
+alter table public.leave_requests add column if not exists employee_id uuid references public.employees (id) on delete set null;
+alter table public.leave_requests add column if not exists notes text;
+update public.leave_requests
+set employee_id = employees.id
+from public.employees as employees
+where public.leave_requests.employee_id is null
+  and public.leave_requests.organization_id = employees.organization_id
+  and public.leave_requests.employee_name = employees.full_name;
+
+alter table public.approvals add column if not exists seed_key text;
+update public.approvals set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.approvals alter column seed_key set default gen_random_uuid()::text;
+alter table public.approvals alter column seed_key set not null;
+alter table public.approvals add column if not exists decision_note text;
+alter table public.approvals add column if not exists decided_at timestamptz;
 
 alter table public.announcements add column if not exists seed_key text;
 update public.announcements set seed_key = gen_random_uuid()::text where seed_key is null;
@@ -200,6 +231,8 @@ create index if not exists pay_periods_organization_id_idx on public.pay_periods
 create index if not exists time_entries_organization_id_idx on public.time_entries (organization_id);
 create index if not exists time_entries_employee_id_idx on public.time_entries (employee_id);
 create index if not exists leave_requests_organization_id_idx on public.leave_requests (organization_id);
+create index if not exists approvals_organization_id_idx on public.approvals (organization_id);
+create index if not exists approvals_entity_idx on public.approvals (entity_type, entity_id);
 create index if not exists announcements_organization_id_idx on public.announcements (organization_id);
 create index if not exists profiles_organization_id_idx on public.profiles (organization_id);
 
@@ -219,6 +252,8 @@ create unique index if not exists time_entries_organization_seed_key_idx
   on public.time_entries (organization_id, seed_key);
 create unique index if not exists leave_requests_organization_seed_key_idx
   on public.leave_requests (organization_id, seed_key);
+create unique index if not exists approvals_organization_seed_key_idx
+  on public.approvals (organization_id, seed_key);
 create unique index if not exists announcements_organization_seed_key_idx
   on public.announcements (organization_id, seed_key);
 
@@ -241,6 +276,7 @@ alter table public.payroll_runs enable row level security;
 alter table public.pay_periods enable row level security;
 alter table public.time_entries enable row level security;
 alter table public.leave_requests enable row level security;
+alter table public.approvals enable row level security;
 alter table public.announcements enable row level security;
 alter table public.organizations enable row level security;
 
@@ -444,6 +480,35 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete leave requests in their organization" on public.leave_requests;
 create policy "users can delete leave requests in their organization"
 on public.leave_requests
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read approvals in their organization" on public.approvals;
+create policy "users can read approvals in their organization"
+on public.approvals
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert approvals in their organization" on public.approvals;
+create policy "users can insert approvals in their organization"
+on public.approvals
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update approvals in their organization" on public.approvals;
+create policy "users can update approvals in their organization"
+on public.approvals
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete approvals in their organization" on public.approvals;
+create policy "users can delete approvals in their organization"
+on public.approvals
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

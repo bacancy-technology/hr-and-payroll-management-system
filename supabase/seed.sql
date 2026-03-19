@@ -174,6 +174,7 @@ set
 insert into public.leave_requests (
   organization_id,
   seed_key,
+  employee_id,
   employee_name,
   type,
   start_date,
@@ -183,11 +184,12 @@ insert into public.leave_requests (
   approver_name
 )
 values
-  ('11111111-1111-1111-1111-111111111111', 'leave-request-marcus-lee', 'Marcus Lee', 'Annual Leave', '2026-03-21', '2026-03-28', 6, 'Approved', 'Daniel Moss'),
-  ('11111111-1111-1111-1111-111111111111', 'leave-request-elena-torres', 'Elena Torres', 'Work From Anywhere', '2026-04-08', '2026-04-18', 7, 'Pending', 'Anika Raman'),
-  ('11111111-1111-1111-1111-111111111111', 'leave-request-noah-kim', 'Noah Kim', 'Family Care', '2026-03-26', '2026-03-27', 2, 'In Review', 'Priya Nair')
+  ('11111111-1111-1111-1111-111111111111', 'leave-request-marcus-lee', (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-marcus-lee'), 'Marcus Lee', 'Annual Leave', '2026-03-21', '2026-03-28', 6, 'Approved', 'Daniel Moss'),
+  ('11111111-1111-1111-1111-111111111111', 'leave-request-elena-torres', (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-elena-torres'), 'Elena Torres', 'Work From Anywhere', '2026-04-08', '2026-04-18', 7, 'Pending', 'Anika Raman'),
+  ('11111111-1111-1111-1111-111111111111', 'leave-request-noah-kim', (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-noah-kim'), 'Noah Kim', 'Family Care', '2026-03-26', '2026-03-27', 2, 'In Review', 'Priya Nair')
 on conflict (organization_id, seed_key) do update
 set
+  employee_id = excluded.employee_id,
   employee_name = excluded.employee_name,
   type = excluded.type,
   start_date = excluded.start_date,
@@ -195,6 +197,61 @@ set
   days = excluded.days,
   status = excluded.status,
   approver_name = excluded.approver_name;
+
+insert into public.approvals (
+  organization_id,
+  seed_key,
+  entity_type,
+  entity_id,
+  requested_by_name,
+  assigned_to_name,
+  status,
+  decision_note,
+  decided_at
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'approval-leave-marcus-lee',
+    'leave_request',
+    (select id from public.leave_requests where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'leave-request-marcus-lee'),
+    'Marcus Lee',
+    'Daniel Moss',
+    'Approved',
+    'Coverage is already arranged for the design review sprint.',
+    '2026-03-18T11:00:00Z'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'approval-leave-elena-torres',
+    'leave_request',
+    (select id from public.leave_requests where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'leave-request-elena-torres'),
+    'Elena Torres',
+    'Anika Raman',
+    'Pending',
+    null,
+    null
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'approval-leave-noah-kim',
+    'leave_request',
+    (select id from public.leave_requests where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'leave-request-noah-kim'),
+    'Noah Kim',
+    'Priya Nair',
+    'In Review',
+    'Waiting for payroll close timing confirmation.',
+    null
+  )
+on conflict (organization_id, seed_key) do update
+set
+  entity_type = excluded.entity_type,
+  entity_id = excluded.entity_id,
+  requested_by_name = excluded.requested_by_name,
+  assigned_to_name = excluded.assigned_to_name,
+  status = excluded.status,
+  decision_note = excluded.decision_note,
+  decided_at = excluded.decided_at;
 
 insert into public.announcements (
   organization_id,

@@ -155,6 +155,7 @@ async function main() {
   const leaveRequests = seedData.leaveRequests.map((request) => ({
     organization_id: organizationId,
     seed_key: request.seedKey,
+    employee_id: null,
     employee_name: request.employeeName,
     type: request.type,
     start_date: request.startDate,
@@ -234,6 +235,30 @@ async function main() {
   const payPeriodIdBySeedKey = new Map(payPeriodRows.map((period) => [period.seed_key, period.id]));
   const payPeriodSeedKeyByLabel = new Map(seedData.payPeriods.map((period) => [period.label, period.seedKey]));
 
+  const leaveRequestsWithEmployeeIds = leaveRequests.map((request) => ({
+    ...request,
+    employee_id: employeeIdBySeedKey.get(employeeIdByName.get(request.employee_name)) ?? null,
+  }));
+
+  const { error: leaveRequestsWithEmployeesError } = await supabase.from("leave_requests").upsert(leaveRequestsWithEmployeeIds, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (leaveRequestsWithEmployeesError) {
+    throw new Error(`Failed to update leave requests with employee references: ${leaveRequestsWithEmployeesError.message}`);
+  }
+
+  const { data: leaveRequestRows, error: leaveRequestRowsError } = await supabase
+    .from("leave_requests")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (leaveRequestRowsError) {
+    throw new Error(`Failed to load leave requests after seeding: ${leaveRequestRowsError.message}`);
+  }
+
+  const leaveRequestIdBySeedKey = new Map(leaveRequestRows.map((request) => [request.seed_key, request.id]));
+
   const timeEntries = seedData.timeEntries.map((entry) => ({
     organization_id: organizationId,
     seed_key: entry.seedKey,
@@ -256,6 +281,26 @@ async function main() {
     throw new Error(`Failed to seed time entries: ${timeEntriesError.message}`);
   }
 
+  const approvals = seedData.approvals.map((approval) => ({
+    organization_id: organizationId,
+    seed_key: approval.seedKey,
+    entity_type: approval.entityType,
+    entity_id: leaveRequestIdBySeedKey.get(approval.entitySeedKey) ?? null,
+    requested_by_name: approval.requestedByName,
+    assigned_to_name: approval.assignedToName,
+    status: approval.status,
+    decision_note: approval.decisionNote,
+    decided_at: approval.status === "Approved" || approval.status === "Rejected" ? new Date().toISOString() : null,
+  }));
+
+  const { error: approvalsError } = await supabase.from("approvals").upsert(approvals, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (approvalsError) {
+    throw new Error(`Failed to seed approvals: ${approvalsError.message}`);
+  }
+
   console.log(`Seeded organization ${organizationId}`);
   console.log(`Departments: ${departments.length}`);
   console.log(`Employees: ${employees.length}`);
@@ -263,6 +308,7 @@ async function main() {
   console.log(`Pay periods: ${payPeriods.length}`);
   console.log(`Time entries: ${timeEntries.length}`);
   console.log(`Leave requests: ${leaveRequests.length}`);
+  console.log(`Approvals: ${approvals.length}`);
   console.log(`Announcements: ${announcements.length}`);
 }
 

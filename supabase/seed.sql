@@ -66,25 +66,88 @@ set
 insert into public.payroll_runs (
   organization_id,
   seed_key,
+  pay_period_id,
   period_label,
   pay_date,
   status,
   employee_count,
   total_amount,
-  variance_note
+  variance_note,
+  notes,
+  calculated_at,
+  finalized_at
 )
 values
-  ('11111111-1111-1111-1111-111111111111', 'payroll-run-2026-03', 'March 2026', '2026-03-29', 'Processing', 62, 412840, '+2.3% vs last month'),
-  ('11111111-1111-1111-1111-111111111111', 'payroll-run-2026-02', 'February 2026', '2026-02-27', 'Paid', 61, 403620, '+1 new starter'),
-  ('11111111-1111-1111-1111-111111111111', 'payroll-run-2026-01', 'January 2026', '2026-01-30', 'Paid', 60, 397200, 'No payroll exceptions')
+  ('11111111-1111-1111-1111-111111111111', 'payroll-run-2026-03', (select id from public.pay_periods where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'pay-period-2026-03b'), 'March 2026', '2026-03-29', 'Processing', 62, 412840, '+2.3% vs last month', 'Pre-close variance flagged for overtime review.', '2026-03-19T09:00:00Z', null),
+  ('11111111-1111-1111-1111-111111111111', 'payroll-run-2026-02', (select id from public.pay_periods where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'pay-period-2026-03'), 'February 2026', '2026-02-27', 'Paid', 61, 403620, '+1 new starter', 'Closed and remitted.', '2026-02-26T10:30:00Z', '2026-02-27T14:00:00Z'),
+  ('11111111-1111-1111-1111-111111111111', 'payroll-run-2026-01', (select id from public.pay_periods where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'pay-period-2026-03'), 'January 2026', '2026-01-30', 'Paid', 60, 397200, 'No payroll exceptions', 'Closed and remitted.', '2026-01-29T11:15:00Z', '2026-01-30T13:30:00Z')
 on conflict (organization_id, seed_key) do update
 set
+  pay_period_id = excluded.pay_period_id,
   period_label = excluded.period_label,
   pay_date = excluded.pay_date,
   status = excluded.status,
   employee_count = excluded.employee_count,
   total_amount = excluded.total_amount,
-  variance_note = excluded.variance_note;
+  variance_note = excluded.variance_note,
+  notes = excluded.notes,
+  calculated_at = excluded.calculated_at,
+  finalized_at = excluded.finalized_at;
+
+insert into public.payroll_items (
+  organization_id,
+  seed_key,
+  payroll_run_id,
+  employee_id,
+  gross_pay,
+  tax_amount,
+  deductions_amount,
+  net_pay,
+  status
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'payroll-item-anika-2026-03',
+    (select id from public.payroll_runs where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'payroll-run-2026-03'),
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-anika-raman'),
+    6167,
+    1233,
+    320,
+    4614,
+    'Calculated'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'payroll-item-jordan-2026-03',
+    (select id from public.payroll_runs where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'payroll-run-2026-03'),
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-jordan-blake'),
+    5738,
+    1148,
+    290,
+    4300,
+    'Calculated'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'payroll-item-priya-2026-03',
+    (select id from public.payroll_runs where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'payroll-run-2026-03'),
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-priya-nair'),
+    4178,
+    836,
+    201,
+    3141,
+    'Calculated'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  payroll_run_id = excluded.payroll_run_id,
+  employee_id = excluded.employee_id,
+  gross_pay = excluded.gross_pay,
+  tax_amount = excluded.tax_amount,
+  deductions_amount = excluded.deductions_amount,
+  net_pay = excluded.net_pay,
+  status = excluded.status;
 
 insert into public.pay_periods (
   organization_id,

@@ -48,12 +48,30 @@ create table if not exists public.payroll_runs (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
   seed_key text not null default gen_random_uuid()::text,
+  pay_period_id uuid references public.pay_periods (id) on delete set null,
   period_label text not null,
   pay_date date not null,
   status text not null default 'Scheduled',
   employee_count integer not null check (employee_count >= 0),
   total_amount numeric(12, 2) not null check (total_amount >= 0),
   variance_note text not null,
+  notes text,
+  calculated_at timestamptz,
+  finalized_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.payroll_items (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  payroll_run_id uuid not null references public.payroll_runs (id) on delete cascade,
+  employee_id uuid not null references public.employees (id) on delete cascade,
+  gross_pay numeric(12, 2) not null check (gross_pay >= 0),
+  tax_amount numeric(12, 2) not null default 0 check (tax_amount >= 0),
+  deductions_amount numeric(12, 2) not null default 0 check (deductions_amount >= 0),
+  net_pay numeric(12, 2) not null check (net_pay >= 0),
+  status text not null default 'Draft',
   created_at timestamptz not null default now()
 );
 
@@ -186,6 +204,15 @@ alter table public.payroll_runs add column if not exists seed_key text;
 update public.payroll_runs set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.payroll_runs alter column seed_key set default gen_random_uuid()::text;
 alter table public.payroll_runs alter column seed_key set not null;
+alter table public.payroll_runs add column if not exists pay_period_id uuid references public.pay_periods (id) on delete set null;
+alter table public.payroll_runs add column if not exists notes text;
+alter table public.payroll_runs add column if not exists calculated_at timestamptz;
+alter table public.payroll_runs add column if not exists finalized_at timestamptz;
+
+alter table public.payroll_items add column if not exists seed_key text;
+update public.payroll_items set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.payroll_items alter column seed_key set default gen_random_uuid()::text;
+alter table public.payroll_items alter column seed_key set not null;
 
 alter table public.pay_periods add column if not exists seed_key text;
 update public.pay_periods set seed_key = gen_random_uuid()::text where seed_key is null;
@@ -227,6 +254,8 @@ alter table public.announcements alter column seed_key set not null;
 create index if not exists departments_organization_id_idx on public.departments (organization_id);
 create index if not exists employees_organization_id_idx on public.employees (organization_id);
 create index if not exists payroll_runs_organization_id_idx on public.payroll_runs (organization_id);
+create index if not exists payroll_items_organization_id_idx on public.payroll_items (organization_id);
+create index if not exists payroll_items_payroll_run_id_idx on public.payroll_items (payroll_run_id);
 create index if not exists pay_periods_organization_id_idx on public.pay_periods (organization_id);
 create index if not exists time_entries_organization_id_idx on public.time_entries (organization_id);
 create index if not exists time_entries_employee_id_idx on public.time_entries (employee_id);
@@ -246,6 +275,10 @@ create unique index if not exists employees_organization_email_idx
   on public.employees (organization_id, email);
 create unique index if not exists payroll_runs_organization_seed_key_idx
   on public.payroll_runs (organization_id, seed_key);
+create unique index if not exists payroll_items_organization_seed_key_idx
+  on public.payroll_items (organization_id, seed_key);
+create unique index if not exists payroll_items_run_employee_idx
+  on public.payroll_items (payroll_run_id, employee_id);
 create unique index if not exists pay_periods_organization_seed_key_idx
   on public.pay_periods (organization_id, seed_key);
 create unique index if not exists time_entries_organization_seed_key_idx
@@ -273,6 +306,7 @@ alter table public.profiles enable row level security;
 alter table public.departments enable row level security;
 alter table public.employees enable row level security;
 alter table public.payroll_runs enable row level security;
+alter table public.payroll_items enable row level security;
 alter table public.pay_periods enable row level security;
 alter table public.time_entries enable row level security;
 alter table public.leave_requests enable row level security;
@@ -393,6 +427,35 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete payroll runs in their organization" on public.payroll_runs;
 create policy "users can delete payroll runs in their organization"
 on public.payroll_runs
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read payroll items in their organization" on public.payroll_items;
+create policy "users can read payroll items in their organization"
+on public.payroll_items
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert payroll items in their organization" on public.payroll_items;
+create policy "users can insert payroll items in their organization"
+on public.payroll_items
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update payroll items in their organization" on public.payroll_items;
+create policy "users can update payroll items in their organization"
+on public.payroll_items
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete payroll items in their organization" on public.payroll_items;
+create policy "users can delete payroll items in their organization"
+on public.payroll_items
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

@@ -108,6 +108,7 @@
     {
       "seedKey": "payroll-run-2026-03",
       "periodLabel": "March 2026",
+      "payPeriodLabel": "Late March 2026",
       "payDate": "2026-03-29",
       "status": "Processing",
       "employeeCount": 62,
@@ -117,6 +118,7 @@
     {
       "seedKey": "payroll-run-2026-02",
       "periodLabel": "February 2026",
+      "payPeriodLabel": "March 2026",
       "payDate": "2026-02-27",
       "status": "Paid",
       "employeeCount": 61,
@@ -126,11 +128,44 @@
     {
       "seedKey": "payroll-run-2026-01",
       "periodLabel": "January 2026",
+      "payPeriodLabel": "March 2026",
       "payDate": "2026-01-30",
       "status": "Paid",
       "employeeCount": 60,
       "totalAmount": 397200,
       "varianceNote": "No payroll exceptions"
+    }
+  ],
+  "payrollItems": [
+    {
+      "seedKey": "payroll-item-anika-2026-03",
+      "payrollRunLabel": "March 2026",
+      "employeeName": "Anika Raman",
+      "grossPay": 6167,
+      "taxAmount": 1233,
+      "deductionsAmount": 320,
+      "netPay": 4614,
+      "status": "Calculated"
+    },
+    {
+      "seedKey": "payroll-item-jordan-2026-03",
+      "payrollRunLabel": "March 2026",
+      "employeeName": "Jordan Blake",
+      "grossPay": 5738,
+      "taxAmount": 1148,
+      "deductionsAmount": 290,
+      "netPay": 4300,
+      "status": "Calculated"
+    },
+    {
+      "seedKey": "payroll-item-priya-2026-03",
+      "payrollRunLabel": "March 2026",
+      "employeeName": "Priya Nair",
+      "grossPay": 4178,
+      "taxAmount": 836,
+      "deductionsAmount": 201,
+      "netPay": 3141,
+      "status": "Calculated"
     }
   ],
   "payPeriods": [

@@ -130,12 +130,16 @@ async function main() {
   const payrollRuns = seedData.payrollRuns.map((run) => ({
     organization_id: organizationId,
     seed_key: run.seedKey,
+    pay_period_id: null,
     period_label: run.periodLabel,
     pay_date: run.payDate,
     status: run.status,
     employee_count: run.employeeCount,
     total_amount: run.totalAmount,
     variance_note: run.varianceNote,
+    notes: run.status === "Processing" ? "Pre-close variance flagged for overtime review." : "Closed and remitted.",
+    calculated_at: new Date().toISOString(),
+    finalized_at: run.status === "Paid" ? new Date().toISOString() : null,
   }));
 
   const payPeriods = seedData.payPeriods.map((period) => ({
@@ -235,6 +239,36 @@ async function main() {
   const payPeriodIdBySeedKey = new Map(payPeriodRows.map((period) => [period.seed_key, period.id]));
   const payPeriodSeedKeyByLabel = new Map(seedData.payPeriods.map((period) => [period.label, period.seedKey]));
 
+  const payrollRunsWithPayPeriods = payrollRuns.map((run) => ({
+    ...run,
+    pay_period_id: payPeriodIdBySeedKey.get(
+      seedData.payrollRuns.find((item) => item.seedKey === run.seed_key)?.payPeriodLabel
+        ? payPeriodSeedKeyByLabel.get(
+            seedData.payrollRuns.find((item) => item.seedKey === run.seed_key)?.payPeriodLabel,
+          )
+        : undefined,
+    ) ?? null,
+  }));
+
+  const { error: payrollRunsWithPayPeriodsError } = await supabase.from("payroll_runs").upsert(payrollRunsWithPayPeriods, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (payrollRunsWithPayPeriodsError) {
+    throw new Error(`Failed to update payroll runs with pay periods: ${payrollRunsWithPayPeriodsError.message}`);
+  }
+
+  const { data: payrollRunRows, error: payrollRunRowsError } = await supabase
+    .from("payroll_runs")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (payrollRunRowsError) {
+    throw new Error(`Failed to load payroll runs after seeding: ${payrollRunRowsError.message}`);
+  }
+
+  const payrollRunIdBySeedKey = new Map(payrollRunRows.map((run) => [run.seed_key, run.id]));
+
   const leaveRequestsWithEmployeeIds = leaveRequests.map((request) => ({
     ...request,
     employee_id: employeeIdBySeedKey.get(employeeIdByName.get(request.employee_name)) ?? null,
@@ -281,6 +315,27 @@ async function main() {
     throw new Error(`Failed to seed time entries: ${timeEntriesError.message}`);
   }
 
+  const payrollRunSeedKeyByLabel = new Map(seedData.payrollRuns.map((run) => [run.periodLabel, run.seedKey]));
+  const payrollItems = seedData.payrollItems.map((item) => ({
+    organization_id: organizationId,
+    seed_key: item.seedKey,
+    payroll_run_id: payrollRunIdBySeedKey.get(payrollRunSeedKeyByLabel.get(item.payrollRunLabel)) ?? null,
+    employee_id: employeeIdBySeedKey.get(employeeIdByName.get(item.employeeName)) ?? null,
+    gross_pay: item.grossPay,
+    tax_amount: item.taxAmount,
+    deductions_amount: item.deductionsAmount,
+    net_pay: item.netPay,
+    status: item.status,
+  }));
+
+  const { error: payrollItemsError } = await supabase.from("payroll_items").upsert(payrollItems, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (payrollItemsError) {
+    throw new Error(`Failed to seed payroll items: ${payrollItemsError.message}`);
+  }
+
   const approvals = seedData.approvals.map((approval) => ({
     organization_id: organizationId,
     seed_key: approval.seedKey,
@@ -305,6 +360,7 @@ async function main() {
   console.log(`Departments: ${departments.length}`);
   console.log(`Employees: ${employees.length}`);
   console.log(`Payroll runs: ${payrollRuns.length}`);
+  console.log(`Payroll items: ${payrollItems.length}`);
   console.log(`Pay periods: ${payPeriods.length}`);
   console.log(`Time entries: ${timeEntries.length}`);
   console.log(`Leave requests: ${leaveRequests.length}`);

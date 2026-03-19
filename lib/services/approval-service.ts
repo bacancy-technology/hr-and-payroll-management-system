@@ -127,6 +127,52 @@ export async function createApproval(
   return normalizeApproval(data);
 }
 
+export async function upsertApprovalByEntity(
+  supabase: AuthenticatedSupabaseClient,
+  organizationId: string,
+  input: ApprovalInput,
+) {
+  const { data: existing, error: existingError } = await supabase
+    .from("approvals")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("entity_type", input.entityType)
+    .eq("entity_id", input.entityId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new ApiError(500, "Failed to load the existing approval.", existingError.message);
+  }
+
+  if (!existing) {
+    return createApproval(supabase, organizationId, input);
+  }
+
+  const { data, error } = await supabase
+    .from("approvals")
+    .update({
+      requested_by_name: input.requestedByName,
+      assigned_to_name: input.assignedToName,
+      status: input.status ?? "Pending",
+      decision_note: input.decisionNote ?? null,
+      decided_at: input.decidedAt ?? null,
+    })
+    .eq("organization_id", organizationId)
+    .eq("id", existing.id)
+    .select("id, entity_type, entity_id, requested_by_name, assigned_to_name, status, decision_note, decided_at, created_at")
+    .maybeSingle();
+
+  if (error) {
+    throw new ApiError(500, "Failed to update the approval.", error.message);
+  }
+
+  if (!data) {
+    throw new ApiError(404, "Approval not found.");
+  }
+
+  return normalizeApproval(data);
+}
+
 async function syncEntityStatus(
   supabase: AuthenticatedSupabaseClient,
   organizationId: string,

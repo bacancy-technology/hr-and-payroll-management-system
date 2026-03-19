@@ -338,6 +338,68 @@
       "receiptMimeType": "application/pdf"
     }
   ],
+  "complianceRules": [
+    {
+      "seedKey": "compliance-rule-federal-941-q1",
+      "name": "Federal Form 941 Q1 Filing",
+      "jurisdiction": "United States - Federal",
+      "category": "Payroll Tax",
+      "deadlineDate": "2026-04-30",
+      "status": "Open",
+      "notes": "Quarterly federal payroll tax return."
+    },
+    {
+      "seedKey": "compliance-rule-state-ca-ui-q1",
+      "name": "California UI Wage Report",
+      "jurisdiction": "California",
+      "category": "State Payroll Tax",
+      "deadlineDate": "2026-04-30",
+      "status": "Open",
+      "notes": "Quarterly wage detail and unemployment filing."
+    }
+  ],
+  "complianceAlerts": [
+    {
+      "seedKey": "compliance-alert-federal-941-q1",
+      "ruleSeedKey": "compliance-rule-federal-941-q1",
+      "severity": "High",
+      "title": "Federal Q1 filing deadline approaching",
+      "message": "Form 941 filing package should be reviewed before month end.",
+      "status": "Open",
+      "dueDate": "2026-04-23"
+    },
+    {
+      "seedKey": "compliance-alert-ca-ui-q1",
+      "ruleSeedKey": "compliance-rule-state-ca-ui-q1",
+      "severity": "Medium",
+      "title": "California wage report pending validation",
+      "message": "Verify wage detail export before submitting the state unemployment filing.",
+      "status": "In Review",
+      "dueDate": "2026-04-25"
+    }
+  ],
+  "taxFilings": [
+    {
+      "seedKey": "tax-filing-federal-941-q1",
+      "filingName": "Form 941 Q1 2026",
+      "jurisdiction": "United States - Federal",
+      "periodLabel": "Q1 2026",
+      "dueDate": "2026-04-30",
+      "status": "Prepared",
+      "amount": 86420,
+      "notes": "Prepared for final sign-off."
+    },
+    {
+      "seedKey": "tax-filing-ca-ui-q1",
+      "filingName": "California UI Q1 2026",
+      "jurisdiction": "California",
+      "periodLabel": "Q1 2026",
+      "dueDate": "2026-04-30",
+      "status": "In Review",
+      "amount": 12480,
+      "notes": "Waiting on final wage reconciliation."
+    }
+  ],
   "approvals": [
     {
       "seedKey": "approval-leave-marcus-lee",

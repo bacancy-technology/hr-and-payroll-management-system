@@ -214,6 +214,29 @@ async function main() {
     receipt_storage_path: expense.receiptStoragePath ?? null,
     receipt_mime_type: expense.receiptMimeType ?? null,
   }));
+  const complianceRules = (seedData.complianceRules ?? []).map((rule) => ({
+    organization_id: organizationId,
+    seed_key: rule.seedKey,
+    name: rule.name,
+    jurisdiction: rule.jurisdiction,
+    category: rule.category,
+    deadline_date: rule.deadlineDate,
+    status: rule.status,
+    notes: rule.notes ?? null,
+  }));
+  const complianceAlertsSeed = seedData.complianceAlerts ?? [];
+  const taxFilings = (seedData.taxFilings ?? []).map((filing) => ({
+    organization_id: organizationId,
+    seed_key: filing.seedKey,
+    filing_name: filing.filingName,
+    jurisdiction: filing.jurisdiction,
+    period_label: filing.periodLabel,
+    due_date: filing.dueDate,
+    filed_at: filing.filedAt ?? null,
+    status: filing.status,
+    amount: filing.amount,
+    notes: filing.notes ?? null,
+  }));
 
   const onboardingWorkflows = (seedData.onboardingWorkflows ?? []).map((workflow) => ({
     organization_id: organizationId,
@@ -261,7 +284,7 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
+  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: complianceRulesError }, { error: taxFilingsError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
     await Promise.all([
       supabase.from("employees").upsert(employees, {
         onConflict: "organization_id,seed_key",
@@ -282,6 +305,12 @@ async function main() {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("expenses").upsert(expenses, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("compliance_rules").upsert(complianceRules, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("tax_filings").upsert(taxFilings, {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("benefits_plans").upsert(benefitsPlans, {
@@ -321,6 +350,14 @@ async function main() {
 
   if (expensesError) {
     throw new Error(`Failed to seed expenses: ${expensesError.message}`);
+  }
+
+  if (complianceRulesError) {
+    throw new Error(`Failed to seed compliance rules: ${complianceRulesError.message}`);
+  }
+
+  if (taxFilingsError) {
+    throw new Error(`Failed to seed tax filings: ${taxFilingsError.message}`);
   }
 
   if (benefitsPlansError) {
@@ -571,6 +608,36 @@ async function main() {
     throw new Error(`Failed to seed performance reviews: ${performanceReviewsError.message}`);
   }
 
+  const { data: complianceRuleRows, error: complianceRuleRowsError } = await supabase
+    .from("compliance_rules")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (complianceRuleRowsError) {
+    throw new Error(`Failed to load compliance rules after seeding: ${complianceRuleRowsError.message}`);
+  }
+
+  const complianceRuleIdBySeedKey = new Map(complianceRuleRows.map((rule) => [rule.seed_key, rule.id]));
+
+  const complianceAlerts = complianceAlertsSeed.map((alert) => ({
+    organization_id: organizationId,
+    seed_key: alert.seedKey,
+    rule_id: complianceRuleIdBySeedKey.get(alert.ruleSeedKey) ?? null,
+    severity: alert.severity,
+    title: alert.title,
+    message: alert.message,
+    status: alert.status,
+    due_date: alert.dueDate,
+  }));
+
+  const { error: complianceAlertsError } = await supabase.from("compliance_alerts").upsert(complianceAlerts, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (complianceAlertsError) {
+    throw new Error(`Failed to seed compliance alerts: ${complianceAlertsError.message}`);
+  }
+
   const timeEntries = seedData.timeEntries.map((entry) => ({
     organization_id: organizationId,
     seed_key: entry.seedKey,
@@ -697,6 +764,9 @@ async function main() {
   console.log(`Time entries: ${timeEntries.length}`);
   console.log(`Leave requests: ${leaveRequests.length}`);
   console.log(`Expenses: ${expenses.length}`);
+  console.log(`Compliance rules: ${complianceRules.length}`);
+  console.log(`Compliance alerts: ${complianceAlerts.length}`);
+  console.log(`Tax filings: ${taxFilings.length}`);
   console.log(`Benefits plans: ${benefitsPlans.length}`);
   console.log(`Benefits enrollments: ${benefitsEnrollments.length}`);
   console.log(`Performance review templates: ${performanceReviewTemplates.length}`);

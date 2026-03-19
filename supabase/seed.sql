@@ -429,6 +429,130 @@ set
   receipt_storage_path = excluded.receipt_storage_path,
   receipt_mime_type = excluded.receipt_mime_type;
 
+insert into public.compliance_rules (
+  organization_id,
+  seed_key,
+  name,
+  jurisdiction,
+  category,
+  deadline_date,
+  status,
+  notes
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'compliance-rule-federal-941-q1',
+    'Federal Form 941 Q1 Filing',
+    'United States - Federal',
+    'Payroll Tax',
+    '2026-04-30',
+    'Open',
+    'Quarterly federal payroll tax return.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'compliance-rule-state-ca-ui-q1',
+    'California UI Wage Report',
+    'California',
+    'State Payroll Tax',
+    '2026-04-30',
+    'Open',
+    'Quarterly wage detail and unemployment filing.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  name = excluded.name,
+  jurisdiction = excluded.jurisdiction,
+  category = excluded.category,
+  deadline_date = excluded.deadline_date,
+  status = excluded.status,
+  notes = excluded.notes;
+
+insert into public.compliance_alerts (
+  organization_id,
+  seed_key,
+  rule_id,
+  severity,
+  title,
+  message,
+  status,
+  due_date
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'compliance-alert-federal-941-q1',
+    (select id from public.compliance_rules where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'compliance-rule-federal-941-q1'),
+    'High',
+    'Federal Q1 filing deadline approaching',
+    'Form 941 filing package should be reviewed before month end.',
+    'Open',
+    '2026-04-23'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'compliance-alert-ca-ui-q1',
+    (select id from public.compliance_rules where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'compliance-rule-state-ca-ui-q1'),
+    'Medium',
+    'California wage report pending validation',
+    'Verify wage detail export before submitting the state unemployment filing.',
+    'In Review',
+    '2026-04-25'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  rule_id = excluded.rule_id,
+  severity = excluded.severity,
+  title = excluded.title,
+  message = excluded.message,
+  status = excluded.status,
+  due_date = excluded.due_date;
+
+insert into public.tax_filings (
+  organization_id,
+  seed_key,
+  filing_name,
+  jurisdiction,
+  period_label,
+  due_date,
+  status,
+  amount,
+  notes
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'tax-filing-federal-941-q1',
+    'Form 941 Q1 2026',
+    'United States - Federal',
+    'Q1 2026',
+    '2026-04-30',
+    'Prepared',
+    86420,
+    'Prepared for final sign-off.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'tax-filing-ca-ui-q1',
+    'California UI Q1 2026',
+    'California',
+    'Q1 2026',
+    '2026-04-30',
+    'In Review',
+    12480,
+    'Waiting on final wage reconciliation.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  filing_name = excluded.filing_name,
+  jurisdiction = excluded.jurisdiction,
+  period_label = excluded.period_label,
+  due_date = excluded.due_date,
+  status = excluded.status,
+  amount = excluded.amount,
+  notes = excluded.notes;
+
 insert into public.approvals (
   organization_id,
   seed_key,

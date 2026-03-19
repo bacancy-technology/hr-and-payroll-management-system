@@ -176,6 +176,47 @@ create table if not exists public.expenses (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.compliance_rules (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  name text not null,
+  jurisdiction text not null,
+  category text not null,
+  deadline_date date not null,
+  status text not null default 'Open',
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.compliance_alerts (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  rule_id uuid not null references public.compliance_rules (id) on delete cascade,
+  severity text not null,
+  title text not null,
+  message text not null,
+  status text not null default 'Open',
+  due_date date not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.tax_filings (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  filing_name text not null,
+  jurisdiction text not null,
+  period_label text not null,
+  due_date date not null,
+  filed_at timestamptz,
+  status text not null default 'Prepared',
+  amount numeric(12, 2) not null default 0 check (amount >= 0),
+  notes text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.approvals (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -447,6 +488,24 @@ where public.expenses.employee_id is null
   and public.expenses.organization_id = employees.organization_id
   and public.expenses.employee_name = employees.full_name;
 
+alter table public.compliance_rules add column if not exists seed_key text;
+update public.compliance_rules set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.compliance_rules alter column seed_key set default gen_random_uuid()::text;
+alter table public.compliance_rules alter column seed_key set not null;
+alter table public.compliance_rules add column if not exists notes text;
+
+alter table public.compliance_alerts add column if not exists seed_key text;
+update public.compliance_alerts set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.compliance_alerts alter column seed_key set default gen_random_uuid()::text;
+alter table public.compliance_alerts alter column seed_key set not null;
+
+alter table public.tax_filings add column if not exists seed_key text;
+update public.tax_filings set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.tax_filings alter column seed_key set default gen_random_uuid()::text;
+alter table public.tax_filings alter column seed_key set not null;
+alter table public.tax_filings add column if not exists filed_at timestamptz;
+alter table public.tax_filings add column if not exists notes text;
+
 alter table public.approvals add column if not exists seed_key text;
 update public.approvals set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.approvals alter column seed_key set default gen_random_uuid()::text;
@@ -556,6 +615,10 @@ create index if not exists time_entries_employee_id_idx on public.time_entries (
 create index if not exists leave_requests_organization_id_idx on public.leave_requests (organization_id);
 create index if not exists expenses_organization_id_idx on public.expenses (organization_id);
 create index if not exists expenses_employee_id_idx on public.expenses (employee_id);
+create index if not exists compliance_rules_organization_id_idx on public.compliance_rules (organization_id);
+create index if not exists compliance_alerts_organization_id_idx on public.compliance_alerts (organization_id);
+create index if not exists compliance_alerts_rule_id_idx on public.compliance_alerts (rule_id);
+create index if not exists tax_filings_organization_id_idx on public.tax_filings (organization_id);
 create index if not exists approvals_organization_id_idx on public.approvals (organization_id);
 create index if not exists approvals_entity_idx on public.approvals (entity_type, entity_id);
 create index if not exists documents_organization_id_idx on public.documents (organization_id);
@@ -605,6 +668,12 @@ create unique index if not exists leave_requests_organization_seed_key_idx
   on public.leave_requests (organization_id, seed_key);
 create unique index if not exists expenses_organization_seed_key_idx
   on public.expenses (organization_id, seed_key);
+create unique index if not exists compliance_rules_organization_seed_key_idx
+  on public.compliance_rules (organization_id, seed_key);
+create unique index if not exists compliance_alerts_organization_seed_key_idx
+  on public.compliance_alerts (organization_id, seed_key);
+create unique index if not exists tax_filings_organization_seed_key_idx
+  on public.tax_filings (organization_id, seed_key);
 create unique index if not exists approvals_organization_seed_key_idx
   on public.approvals (organization_id, seed_key);
 create unique index if not exists documents_organization_seed_key_idx
@@ -652,6 +721,9 @@ alter table public.holidays enable row level security;
 alter table public.time_entries enable row level security;
 alter table public.leave_requests enable row level security;
 alter table public.expenses enable row level security;
+alter table public.compliance_rules enable row level security;
+alter table public.compliance_alerts enable row level security;
+alter table public.tax_filings enable row level security;
 alter table public.approvals enable row level security;
 alter table public.documents enable row level security;
 alter table public.bank_accounts enable row level security;
@@ -980,6 +1052,93 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete expenses in their organization" on public.expenses;
 create policy "users can delete expenses in their organization"
 on public.expenses
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read compliance rules in their organization" on public.compliance_rules;
+create policy "users can read compliance rules in their organization"
+on public.compliance_rules
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert compliance rules in their organization" on public.compliance_rules;
+create policy "users can insert compliance rules in their organization"
+on public.compliance_rules
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update compliance rules in their organization" on public.compliance_rules;
+create policy "users can update compliance rules in their organization"
+on public.compliance_rules
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete compliance rules in their organization" on public.compliance_rules;
+create policy "users can delete compliance rules in their organization"
+on public.compliance_rules
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read compliance alerts in their organization" on public.compliance_alerts;
+create policy "users can read compliance alerts in their organization"
+on public.compliance_alerts
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert compliance alerts in their organization" on public.compliance_alerts;
+create policy "users can insert compliance alerts in their organization"
+on public.compliance_alerts
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update compliance alerts in their organization" on public.compliance_alerts;
+create policy "users can update compliance alerts in their organization"
+on public.compliance_alerts
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete compliance alerts in their organization" on public.compliance_alerts;
+create policy "users can delete compliance alerts in their organization"
+on public.compliance_alerts
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read tax filings in their organization" on public.tax_filings;
+create policy "users can read tax filings in their organization"
+on public.tax_filings
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert tax filings in their organization" on public.tax_filings;
+create policy "users can insert tax filings in their organization"
+on public.tax_filings
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update tax filings in their organization" on public.tax_filings;
+create policy "users can update tax filings in their organization"
+on public.tax_filings
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete tax filings in their organization" on public.tax_filings;
+create policy "users can delete tax filings in their organization"
+on public.tax_filings
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

@@ -29,6 +29,46 @@ set
   code = excluded.code,
   lead_name = excluded.lead_name;
 
+insert into public.access_roles (
+  organization_id,
+  seed_key,
+  name,
+  description,
+  status,
+  permissions
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'access-role-hr-admin',
+    'HR Admin',
+    'Full workforce operations access.',
+    'Active',
+    '["employees:read", "employees:write", "payroll:read", "payroll:write", "compliance:read", "compliance:write", "reports:read"]'::jsonb
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'access-role-manager',
+    'Manager',
+    'Team-level people operations access.',
+    'Active',
+    '["employees:read", "pto:approve", "expenses:approve", "performance:write", "reports:read"]'::jsonb
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'access-role-employee',
+    'Employee',
+    'Self-service access for personal records.',
+    'Active',
+    '["self-service:read", "pto:write", "expenses:write", "documents:read"]'::jsonb
+  )
+on conflict (organization_id, seed_key) do update
+set
+  name = excluded.name,
+  description = excluded.description,
+  status = excluded.status,
+  permissions = excluded.permissions;
+
 insert into public.employees (
   organization_id,
   seed_key,

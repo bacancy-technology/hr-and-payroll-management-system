@@ -94,12 +94,30 @@ async function main() {
     lead_name: department.leadName,
   }));
 
+  const accessRoles = (seedData.accessRoles ?? []).map((role) => ({
+    organization_id: organizationId,
+    seed_key: role.seedKey,
+    name: role.name,
+    description: role.description ?? null,
+    status: role.status,
+    permissions: role.permissions ?? [],
+  }));
+  const roleAssignmentsSeed = seedData.roleAssignments ?? [];
+
   const { error: departmentsError } = await supabase.from("departments").upsert(departments, {
     onConflict: "organization_id,seed_key",
   });
 
   if (departmentsError) {
     throw new Error(`Failed to seed departments: ${departmentsError.message}`);
+  }
+
+  const { error: accessRolesError } = await supabase.from("access_roles").upsert(accessRoles, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (accessRolesError) {
+    throw new Error(`Failed to seed access roles: ${accessRolesError.message}`);
   }
 
   const { data: departmentRows, error: departmentRowsError } = await supabase
@@ -112,6 +130,50 @@ async function main() {
   }
 
   const departmentIdByName = new Map(departmentRows.map((department) => [department.name, department.id]));
+
+  const { data: accessRoleRows, error: accessRoleRowsError } = await supabase
+    .from("access_roles")
+    .select("id, seed_key, name")
+    .eq("organization_id", organizationId);
+
+  if (accessRoleRowsError) {
+    throw new Error(`Failed to load access roles after seeding: ${accessRoleRowsError.message}`);
+  }
+
+  const accessRoleIdBySeedKey = new Map(accessRoleRows.map((role) => [role.seed_key, role.id]));
+
+  const roleAssignments = roleAssignmentsSeed
+    .map((assignment) => ({
+      organization_id: organizationId,
+      seed_key: assignment.seedKey,
+      role_id: accessRoleIdBySeedKey.get(assignment.roleSeedKey) ?? null,
+      profile_id: assignment.profileRef === "current-user" ? user.id : null,
+      assigned_by_name: assignment.assignedByName,
+    }))
+    .filter((assignment) => assignment.role_id && assignment.profile_id);
+
+  if (roleAssignments.length > 0) {
+    const { error: roleAssignmentsError } = await supabase.from("role_assignments").upsert(roleAssignments, {
+      onConflict: "organization_id,seed_key",
+    });
+
+    if (roleAssignmentsError) {
+      throw new Error(`Failed to seed role assignments: ${roleAssignmentsError.message}`);
+    }
+  }
+
+  const primaryRole = accessRoles.find((role) => role.name === "HR Admin") ?? accessRoles[0];
+
+  if (primaryRole) {
+    const { error: profileRoleError } = await supabase
+      .from("profiles")
+      .update({ role: primaryRole.name })
+      .eq("id", user.id);
+
+    if (profileRoleError) {
+      throw new Error(`Failed to sync the seed user's profile role: ${profileRoleError.message}`);
+    }
+  }
 
   const employees = seedData.employees.map((employee) => ({
     organization_id: organizationId,
@@ -755,6 +817,8 @@ async function main() {
 
   console.log(`Seeded organization ${organizationId}`);
   console.log(`Departments: ${departments.length}`);
+  console.log(`Access roles: ${accessRoles.length}`);
+  console.log(`Role assignments: ${roleAssignments.length}`);
   console.log(`Employees: ${employees.length}`);
   console.log(`Contractors: ${contractors.length}`);
   console.log(`Payroll runs: ${payrollRuns.length}`);

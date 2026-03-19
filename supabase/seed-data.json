@@ -30,6 +30,56 @@
       "leadName": "Daniel Moss"
     }
   ],
+  "accessRoles": [
+    {
+      "seedKey": "access-role-hr-admin",
+      "name": "HR Admin",
+      "description": "Full workforce operations access.",
+      "status": "Active",
+      "permissions": [
+        "employees:read",
+        "employees:write",
+        "payroll:read",
+        "payroll:write",
+        "compliance:read",
+        "compliance:write",
+        "reports:read"
+      ]
+    },
+    {
+      "seedKey": "access-role-manager",
+      "name": "Manager",
+      "description": "Team-level people operations access.",
+      "status": "Active",
+      "permissions": [
+        "employees:read",
+        "pto:approve",
+        "expenses:approve",
+        "performance:write",
+        "reports:read"
+      ]
+    },
+    {
+      "seedKey": "access-role-employee",
+      "name": "Employee",
+      "description": "Self-service access for personal records.",
+      "status": "Active",
+      "permissions": [
+        "self-service:read",
+        "pto:write",
+        "expenses:write",
+        "documents:read"
+      ]
+    }
+  ],
+  "roleAssignments": [
+    {
+      "seedKey": "role-assignment-current-admin",
+      "roleSeedKey": "access-role-hr-admin",
+      "assignedByName": "System Seeder",
+      "profileRef": "current-user"
+    }
+  ],
   "employees": [
     {
       "seedKey": "employee-anika-raman",

@@ -12,11 +12,19 @@ interface ProfileRecord {
   organization_id: string | null;
 }
 
+interface AssignedRoleRecord {
+  id: string;
+  name: string;
+  permissions: string[];
+  status: string;
+}
+
 export interface OptionalSessionContext {
   enabled: boolean;
   authenticated: boolean;
   user: User | null;
   profile: ProfileRecord | null;
+  assignedRoles: AssignedRoleRecord[];
 }
 
 export type AuthenticatedSupabaseClient = NonNullable<Awaited<ReturnType<typeof createServerClient>>>;
@@ -26,6 +34,7 @@ export interface ApiContext {
   user: User;
   profile: ProfileRecord;
   organizationId: string;
+  assignedRoles: AssignedRoleRecord[];
 }
 
 async function getSupabaseClient() {
@@ -56,6 +65,35 @@ async function getProfile(supabase: AuthenticatedSupabaseClient, userId: string)
   return data as ProfileRecord | null;
 }
 
+async function getAssignedRoles(
+  supabase: AuthenticatedSupabaseClient,
+  organizationId: string,
+  userId: string,
+): Promise<AssignedRoleRecord[]> {
+  const { data, error } = await supabase
+    .from("role_assignments")
+    .select(
+      `
+        access_roles (
+          id,
+          name,
+          permissions,
+          status
+        )
+      `,
+    )
+    .eq("organization_id", organizationId)
+    .eq("profile_id", userId);
+
+  if (error) {
+    throw new ApiError(500, "Failed to load role assignments.", error.message);
+  }
+
+  return ((data ?? []) as { access_roles: AssignedRoleRecord | AssignedRoleRecord[] | null }[])
+    .map((row) => (Array.isArray(row.access_roles) ? row.access_roles[0] ?? null : row.access_roles))
+    .filter((role): role is AssignedRoleRecord => Boolean(role));
+}
+
 export async function getOptionalSessionContext(): Promise<OptionalSessionContext> {
   if (!env.hasSupabase) {
     return {
@@ -63,6 +101,7 @@ export async function getOptionalSessionContext(): Promise<OptionalSessionContex
       authenticated: false,
       user: null,
       profile: null,
+      assignedRoles: [],
     };
   }
 
@@ -74,6 +113,7 @@ export async function getOptionalSessionContext(): Promise<OptionalSessionContex
       authenticated: false,
       user: null,
       profile: null,
+      assignedRoles: [],
     };
   }
 
@@ -88,14 +128,21 @@ export async function getOptionalSessionContext(): Promise<OptionalSessionContex
       authenticated: false,
       user: null,
       profile: null,
+      assignedRoles: [],
     };
   }
+
+  const profile = await getProfile(supabase, user.id);
+  const assignedRoles = profile?.organization_id
+    ? await getAssignedRoles(supabase, profile.organization_id, user.id)
+    : [];
 
   return {
     enabled: true,
     authenticated: true,
     user,
-    profile: await getProfile(supabase, user.id),
+    profile,
+    assignedRoles,
   };
 }
 
@@ -116,10 +163,13 @@ export async function requireApiContext(): Promise<ApiContext> {
     throw new ApiError(403, "Your account is not assigned to an organization.");
   }
 
+  const assignedRoles = await getAssignedRoles(supabase, profile.organization_id, user.id);
+
   return {
     supabase,
     user,
     profile,
     organizationId: profile.organization_id,
+    assignedRoles,
   };
 }

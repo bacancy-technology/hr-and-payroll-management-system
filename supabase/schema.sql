@@ -27,6 +27,27 @@ create table if not exists public.departments (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.access_roles (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  name text not null,
+  description text,
+  status text not null default 'Active',
+  permissions jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.role_assignments (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  role_id uuid not null references public.access_roles (id) on delete cascade,
+  profile_id uuid not null references public.profiles (id) on delete cascade,
+  assigned_by_name text not null,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.employees (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -373,6 +394,20 @@ alter table public.departments alter column seed_key set not null;
 alter table public.departments add column if not exists code text;
 alter table public.departments add column if not exists lead_name text;
 
+alter table public.access_roles add column if not exists seed_key text;
+update public.access_roles set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.access_roles alter column seed_key set default gen_random_uuid()::text;
+alter table public.access_roles alter column seed_key set not null;
+alter table public.access_roles add column if not exists permissions jsonb;
+update public.access_roles set permissions = '[]'::jsonb where permissions is null;
+alter table public.access_roles alter column permissions set default '[]'::jsonb;
+alter table public.access_roles alter column permissions set not null;
+
+alter table public.role_assignments add column if not exists seed_key text;
+update public.role_assignments set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.role_assignments alter column seed_key set default gen_random_uuid()::text;
+alter table public.role_assignments alter column seed_key set not null;
+
 alter table public.employees add column if not exists seed_key text;
 update public.employees set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.employees alter column seed_key set default gen_random_uuid()::text;
@@ -603,6 +638,10 @@ alter table public.announcements alter column seed_key set default gen_random_uu
 alter table public.announcements alter column seed_key set not null;
 
 create index if not exists departments_organization_id_idx on public.departments (organization_id);
+create index if not exists access_roles_organization_id_idx on public.access_roles (organization_id);
+create index if not exists role_assignments_organization_id_idx on public.role_assignments (organization_id);
+create index if not exists role_assignments_role_id_idx on public.role_assignments (role_id);
+create index if not exists role_assignments_profile_id_idx on public.role_assignments (profile_id);
 create index if not exists employees_organization_id_idx on public.employees (organization_id);
 create index if not exists contractors_organization_id_idx on public.contractors (organization_id);
 create index if not exists payroll_runs_organization_id_idx on public.payroll_runs (organization_id);
@@ -644,6 +683,14 @@ create unique index if not exists departments_organization_seed_key_idx
   on public.departments (organization_id, seed_key);
 create unique index if not exists departments_organization_name_idx
   on public.departments (organization_id, name);
+create unique index if not exists access_roles_organization_seed_key_idx
+  on public.access_roles (organization_id, seed_key);
+create unique index if not exists access_roles_organization_name_idx
+  on public.access_roles (organization_id, name);
+create unique index if not exists role_assignments_organization_seed_key_idx
+  on public.role_assignments (organization_id, seed_key);
+create unique index if not exists role_assignments_role_profile_idx
+  on public.role_assignments (role_id, profile_id);
 create unique index if not exists employees_organization_seed_key_idx
   on public.employees (organization_id, seed_key);
 create unique index if not exists employees_organization_email_idx
@@ -712,6 +759,8 @@ $$;
 
 alter table public.profiles enable row level security;
 alter table public.departments enable row level security;
+alter table public.access_roles enable row level security;
+alter table public.role_assignments enable row level security;
 alter table public.employees enable row level security;
 alter table public.contractors enable row level security;
 alter table public.payroll_runs enable row level security;
@@ -765,6 +814,64 @@ for update
 to authenticated
 using (id = public.current_user_organization_id())
 with check (id = public.current_user_organization_id());
+
+drop policy if exists "users can read roles in their organization" on public.access_roles;
+create policy "users can read roles in their organization"
+on public.access_roles
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert roles in their organization" on public.access_roles;
+create policy "users can insert roles in their organization"
+on public.access_roles
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update roles in their organization" on public.access_roles;
+create policy "users can update roles in their organization"
+on public.access_roles
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete roles in their organization" on public.access_roles;
+create policy "users can delete roles in their organization"
+on public.access_roles
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read role assignments in their organization" on public.role_assignments;
+create policy "users can read role assignments in their organization"
+on public.role_assignments
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert role assignments in their organization" on public.role_assignments;
+create policy "users can insert role assignments in their organization"
+on public.role_assignments
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update role assignments in their organization" on public.role_assignments;
+create policy "users can update role assignments in their organization"
+on public.role_assignments
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete role assignments in their organization" on public.role_assignments;
+create policy "users can delete role assignments in their organization"
+on public.role_assignments
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
 
 drop policy if exists "users can read employees in their organization" on public.employees;
 create policy "users can read employees in their organization"

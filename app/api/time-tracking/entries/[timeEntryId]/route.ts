@@ -1,13 +1,17 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, noContent, ok } from "@/lib/api/http";
+import {
+  deleteTimeEntry,
+  getTimeEntryById,
+  updateTimeEntry,
+} from "@/lib/modules/time-tracking/services/time-entry-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, noContent, ok } from "@/lib/modules/shared/api/http";
 import {
   readJsonBody,
   readOptionalDate,
   readOptionalNumber,
   readOptionalString,
   readOptionalUuid,
-} from "@/lib/api/validation";
-import { deleteTimeEntry, getTimeEntryById, updateTimeEntry } from "@/lib/services/time-tracking-service";
+} from "@/lib/modules/shared/api/validation";
 
 interface TimeEntryRouteProps {
   params: Promise<{

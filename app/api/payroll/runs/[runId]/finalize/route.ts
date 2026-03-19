@@ -1,6 +1,6 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, ok } from "@/lib/api/http";
-import { finalizePayrollRun } from "@/lib/services/payroll-service";
+import { finalizePayrollRun } from "@/lib/modules/payroll/services/payroll-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, ok } from "@/lib/modules/shared/api/http";
 
 interface PayrollRunRouteProps {
   params: Promise<{

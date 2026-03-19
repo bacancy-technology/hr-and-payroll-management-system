@@ -1,8 +1,14 @@
-import { ApiError } from "@/lib/api/errors";
-import { requireApiContext } from "@/lib/api/context";
-import { created, handleRouteError } from "@/lib/api/http";
-import { readJsonBody, readOptionalDate, readOptionalString, readOptionalUuid, readRequiredString } from "@/lib/api/validation";
-import { clockInEmployee } from "@/lib/services/time-tracking-service";
+import { clockInEmployee } from "@/lib/modules/time-tracking/services/time-entry-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
+import { created, handleRouteError } from "@/lib/modules/shared/api/http";
+import {
+  readJsonBody,
+  readOptionalDate,
+  readOptionalString,
+  readOptionalUuid,
+  readRequiredString,
+} from "@/lib/modules/shared/api/validation";
 
 export async function POST(request: Request) {
   try {

@@ -1,7 +1,7 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, ok } from "@/lib/api/http";
-import { readJsonBody, readOptionalString } from "@/lib/api/validation";
-import { approvePayrollRun } from "@/lib/services/payroll-service";
+import { approvePayrollRun } from "@/lib/modules/payroll/services/payroll-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, ok } from "@/lib/modules/shared/api/http";
+import { readJsonBody, readOptionalString } from "@/lib/modules/shared/api/validation";
 
 interface PayrollRunRouteProps {
   params: Promise<{

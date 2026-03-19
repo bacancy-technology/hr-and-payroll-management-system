@@ -1,6 +1,7 @@
-import { ApiError } from "@/lib/api/errors";
-import { requireApiContext } from "@/lib/api/context";
-import { created, handleRouteError, ok } from "@/lib/api/http";
+import { createPtoRequest, listPtoRequests } from "@/lib/modules/pto/services/pto-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
+import { created, handleRouteError, ok } from "@/lib/modules/shared/api/http";
 import {
   readJsonBody,
   readOptionalDate,
@@ -8,8 +9,7 @@ import {
   readOptionalString,
   readOptionalUuid,
   readRequiredString,
-} from "@/lib/api/validation";
-import { createPtoRequest, listPtoRequests } from "@/lib/services/pto-service";
+} from "@/lib/modules/shared/api/validation";
 
 export async function GET() {
   try {

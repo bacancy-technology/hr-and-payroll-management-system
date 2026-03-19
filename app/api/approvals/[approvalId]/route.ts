@@ -1,6 +1,6 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, ok } from "@/lib/api/http";
-import { getApprovalById } from "@/lib/services/approval-service";
+import { getApprovalById } from "@/lib/modules/approvals/services/approval-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, ok } from "@/lib/modules/shared/api/http";
 
 interface ApprovalRouteProps {
   params: Promise<{

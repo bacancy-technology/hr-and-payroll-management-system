@@ -1,5 +1,10 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, noContent, ok } from "@/lib/api/http";
+import {
+  deleteEmployee,
+  getEmployeeById,
+  updateEmployee,
+} from "@/lib/modules/employees/services/employee-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, noContent, ok } from "@/lib/modules/shared/api/http";
 import {
   readJsonBody,
   readOptionalDate,
@@ -7,8 +12,7 @@ import {
   readOptionalString,
   readOptionalUuid,
   readRequiredEmail,
-} from "@/lib/api/validation";
-import { deleteEmployee, getEmployeeById, updateEmployee } from "@/lib/services/employee-service";
+} from "@/lib/modules/shared/api/validation";
 
 interface EmployeeRouteProps {
   params: Promise<{

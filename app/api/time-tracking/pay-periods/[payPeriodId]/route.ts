@@ -1,7 +1,15 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, noContent, ok } from "@/lib/api/http";
-import { readJsonBody, readOptionalDate, readOptionalString } from "@/lib/api/validation";
-import { deletePayPeriod, getPayPeriodById, updatePayPeriod } from "@/lib/services/pay-period-service";
+import {
+  deletePayPeriod,
+  getPayPeriodById,
+  updatePayPeriod,
+} from "@/lib/modules/time-tracking/services/pay-period-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, noContent, ok } from "@/lib/modules/shared/api/http";
+import {
+  readJsonBody,
+  readOptionalDate,
+  readOptionalString,
+} from "@/lib/modules/shared/api/validation";
 
 interface PayPeriodRouteProps {
   params: Promise<{

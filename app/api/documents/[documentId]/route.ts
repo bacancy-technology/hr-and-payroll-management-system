@@ -1,7 +1,15 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, noContent, ok } from "@/lib/api/http";
-import { readJsonBody, readOptionalNumber, readOptionalString } from "@/lib/api/validation";
-import { deleteDocument, getDocumentById, updateDocument } from "@/lib/services/document-service";
+import {
+  deleteDocument,
+  getDocumentById,
+  updateDocument,
+} from "@/lib/modules/documents/services/document-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, noContent, ok } from "@/lib/modules/shared/api/http";
+import {
+  readJsonBody,
+  readOptionalNumber,
+  readOptionalString,
+} from "@/lib/modules/shared/api/validation";
 
 interface DocumentRouteProps {
   params: Promise<{

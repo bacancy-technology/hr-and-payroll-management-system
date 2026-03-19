@@ -1,7 +1,10 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, ok } from "@/lib/api/http";
-import { readJsonBody, readOptionalString } from "@/lib/api/validation";
-import { getCompanyByOrganizationId, updateCompanyByOrganizationId } from "@/lib/services/company-service";
+import {
+  getCompanyByOrganizationId,
+  updateCompanyByOrganizationId,
+} from "@/lib/modules/admin/services/company-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, ok } from "@/lib/modules/shared/api/http";
+import { readJsonBody, readOptionalString } from "@/lib/modules/shared/api/validation";
 
 export async function GET() {
   try {

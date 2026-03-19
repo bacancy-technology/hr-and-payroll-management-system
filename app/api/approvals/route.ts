@@ -1,6 +1,6 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, ok } from "@/lib/api/http";
-import { listApprovals } from "@/lib/services/approval-service";
+import { listApprovals } from "@/lib/modules/approvals/services/approval-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, ok } from "@/lib/modules/shared/api/http";
 
 export async function GET(request: Request) {
   try {

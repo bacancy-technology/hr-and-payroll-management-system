@@ -1,6 +1,9 @@
-import { ApiError } from "@/lib/api/errors";
-import type { AuthenticatedSupabaseClient } from "@/lib/api/context";
-import { ensureEmployeeExistsInOrganization, ensurePayPeriodExistsInOrganization } from "@/lib/services/org-reference-service";
+import type { AuthenticatedSupabaseClient } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
+import {
+  ensureEmployeeExistsInOrganization,
+  ensurePayPeriodExistsInOrganization,
+} from "@/lib/modules/shared/services/org-reference-service";
 
 interface TimeEntryInput {
   employeeId?: string;

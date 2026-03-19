@@ -1,8 +1,16 @@
-import { ApiError } from "@/lib/api/errors";
-import { requireApiContext } from "@/lib/api/context";
-import { created, handleRouteError, ok } from "@/lib/api/http";
-import { readJsonBody, readOptionalDate, readOptionalString, readRequiredString } from "@/lib/api/validation";
-import { createPayPeriod, listPayPeriods } from "@/lib/services/pay-period-service";
+import {
+  createPayPeriod,
+  listPayPeriods,
+} from "@/lib/modules/time-tracking/services/pay-period-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
+import { created, handleRouteError, ok } from "@/lib/modules/shared/api/http";
+import {
+  readJsonBody,
+  readOptionalDate,
+  readOptionalString,
+  readRequiredString,
+} from "@/lib/modules/shared/api/validation";
 
 export async function GET() {
   try {

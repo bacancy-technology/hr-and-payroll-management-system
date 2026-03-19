@@ -1,5 +1,5 @@
-import { getOptionalSessionContext } from "@/lib/api/context";
-import { handleRouteError, ok } from "@/lib/api/http";
+import { getOptionalSessionContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, ok } from "@/lib/modules/shared/api/http";
 
 export async function GET() {
   try {

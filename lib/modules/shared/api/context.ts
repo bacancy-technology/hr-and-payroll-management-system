@@ -1,6 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 
-import { ApiError } from "@/lib/api/errors";
+import { ApiError } from "@/lib/modules/shared/api/errors";
 import { env } from "@/lib/env";
 import { createServerClient } from "@/lib/supabase/server";
 

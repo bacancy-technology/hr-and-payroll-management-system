@@ -1,7 +1,7 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, ok } from "@/lib/api/http";
-import { readJsonBody, readOptionalString } from "@/lib/api/validation";
-import { decideApproval } from "@/lib/services/approval-service";
+import { decideApproval } from "@/lib/modules/approvals/services/approval-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, ok } from "@/lib/modules/shared/api/http";
+import { readJsonBody, readOptionalString } from "@/lib/modules/shared/api/validation";
 
 interface ApprovalDecisionRouteProps {
   params: Promise<{

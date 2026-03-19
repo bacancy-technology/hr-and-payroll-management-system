@@ -1,5 +1,5 @@
-import { ApiError } from "@/lib/api/errors";
-import type { AuthenticatedSupabaseClient } from "@/lib/api/context";
+import type { AuthenticatedSupabaseClient } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
 
 interface PayPeriodInput {
   label?: string;

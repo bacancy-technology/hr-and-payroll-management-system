@@ -1,14 +1,16 @@
-import { ApiError } from "@/lib/api/errors";
-import { requireApiContext } from "@/lib/api/context";
-import { created, handleRouteError, ok } from "@/lib/api/http";
+import {
+  createDocument,
+  listDocuments,
+} from "@/lib/modules/documents/services/document-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
+import { created, handleRouteError, ok } from "@/lib/modules/shared/api/http";
 import {
   readJsonBody,
   readOptionalNumber,
   readOptionalString,
-  readOptionalUuid,
   readRequiredString,
-} from "@/lib/api/validation";
-import { createDocument, listDocuments } from "@/lib/services/document-service";
+} from "@/lib/modules/shared/api/validation";
 
 export async function GET(request: Request) {
   try {

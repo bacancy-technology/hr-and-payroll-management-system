@@ -1,13 +1,17 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, noContent, ok } from "@/lib/api/http";
+import {
+  deletePtoRequest,
+  getPtoRequestById,
+  updatePtoRequest,
+} from "@/lib/modules/pto/services/pto-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, noContent, ok } from "@/lib/modules/shared/api/http";
 import {
   readJsonBody,
   readOptionalDate,
   readOptionalNumber,
   readOptionalString,
   readOptionalUuid,
-} from "@/lib/api/validation";
-import { deletePtoRequest, getPtoRequestById, updatePtoRequest } from "@/lib/services/pto-service";
+} from "@/lib/modules/shared/api/validation";
 
 interface PtoRouteProps {
   params: Promise<{

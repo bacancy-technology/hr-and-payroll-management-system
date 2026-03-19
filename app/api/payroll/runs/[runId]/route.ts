@@ -1,7 +1,16 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, noContent, ok } from "@/lib/api/http";
-import { readJsonBody, readOptionalDate, readOptionalString, readOptionalUuid } from "@/lib/api/validation";
-import { deletePayrollRun, getPayrollRunById, updatePayrollRun } from "@/lib/services/payroll-service";
+import {
+  deletePayrollRun,
+  getPayrollRunById,
+  updatePayrollRun,
+} from "@/lib/modules/payroll/services/payroll-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, noContent, ok } from "@/lib/modules/shared/api/http";
+import {
+  readJsonBody,
+  readOptionalDate,
+  readOptionalString,
+  readOptionalUuid,
+} from "@/lib/modules/shared/api/validation";
 
 interface PayrollRunRouteProps {
   params: Promise<{

@@ -1,4 +1,4 @@
-import { ApiError } from "@/lib/api/errors";
+import { ApiError } from "@/lib/modules/shared/api/errors";
 
 type UnknownRecord = Record<string, unknown>;
 

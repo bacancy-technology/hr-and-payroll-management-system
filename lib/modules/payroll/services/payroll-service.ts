@@ -1,7 +1,7 @@
-import { ApiError } from "@/lib/api/errors";
-import type { ApiContext, AuthenticatedSupabaseClient } from "@/lib/api/context";
-import { upsertApprovalByEntity } from "@/lib/services/approval-service";
-import { ensurePayPeriodExistsInOrganization } from "@/lib/services/org-reference-service";
+import { upsertApprovalByEntity } from "@/lib/modules/approvals/services/approval-service";
+import type { ApiContext, AuthenticatedSupabaseClient } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
+import { ensurePayPeriodExistsInOrganization } from "@/lib/modules/shared/services/org-reference-service";
 
 interface PayrollRunInput {
   payPeriodId?: string | null;

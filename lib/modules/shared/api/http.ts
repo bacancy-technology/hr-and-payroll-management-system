@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { ApiError, isApiError } from "@/lib/api/errors";
+import { ApiError, isApiError } from "@/lib/modules/shared/api/errors";
 
 export function ok<T>(data: T, init?: ResponseInit) {
   return NextResponse.json({ data }, init);

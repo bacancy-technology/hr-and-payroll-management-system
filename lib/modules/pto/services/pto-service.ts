@@ -1,7 +1,7 @@
-import { ApiError } from "@/lib/api/errors";
-import type { AuthenticatedSupabaseClient } from "@/lib/api/context";
-import { createApproval } from "@/lib/services/approval-service";
-import { getEmployeeSummaryInOrganization } from "@/lib/services/org-reference-service";
+import { createApproval } from "@/lib/modules/approvals/services/approval-service";
+import type { AuthenticatedSupabaseClient } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
+import { getEmployeeSummaryInOrganization } from "@/lib/modules/shared/services/org-reference-service";
 
 interface PtoRequestInput {
   employeeId?: string;

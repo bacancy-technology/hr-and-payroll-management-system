@@ -1,7 +1,11 @@
-import { requireApiContext } from "@/lib/api/context";
-import { handleRouteError, noContent, ok } from "@/lib/api/http";
-import { readJsonBody, readOptionalString } from "@/lib/api/validation";
-import { deleteDepartment, getDepartmentById, updateDepartment } from "@/lib/services/department-service";
+import {
+  deleteDepartment,
+  getDepartmentById,
+  updateDepartment,
+} from "@/lib/modules/admin/services/department-service";
+import { requireApiContext } from "@/lib/modules/shared/api/context";
+import { handleRouteError, noContent, ok } from "@/lib/modules/shared/api/http";
+import { readJsonBody, readOptionalString } from "@/lib/modules/shared/api/validation";
 
 interface DepartmentRouteProps {
   params: Promise<{

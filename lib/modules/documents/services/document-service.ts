@@ -1,6 +1,6 @@
-import { ApiError } from "@/lib/api/errors";
-import type { AuthenticatedSupabaseClient } from "@/lib/api/context";
-import { getEmployeeSummaryInOrganization } from "@/lib/services/org-reference-service";
+import type { AuthenticatedSupabaseClient } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
+import { getEmployeeSummaryInOrganization } from "@/lib/modules/shared/services/org-reference-service";
 
 interface DocumentFilters {
   entityType?: string;

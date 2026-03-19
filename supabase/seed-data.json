@@ -432,6 +432,48 @@
       "notes": "Awaiting penny test confirmation."
     }
   ],
+  "benefitsPlans": [
+    {
+      "seedKey": "benefits-plan-health-plus",
+      "name": "Health Plus PPO",
+      "providerName": "NovaCare",
+      "category": "Health Insurance",
+      "coverageLevel": "Employee + Family",
+      "employeeCost": 240,
+      "employerCost": 610,
+      "status": "Active"
+    },
+    {
+      "seedKey": "benefits-plan-retirement-match",
+      "name": "Retirement Match 401(k)",
+      "providerName": "FutureNest",
+      "category": "Retirement",
+      "coverageLevel": "Employee",
+      "employeeCost": 180,
+      "employerCost": 180,
+      "status": "Active"
+    }
+  ],
+  "benefitsEnrollments": [
+    {
+      "seedKey": "benefits-enrollment-anika-health",
+      "employeeName": "Anika Raman",
+      "planSeedKey": "benefits-plan-health-plus",
+      "status": "Active",
+      "effectiveDate": "2026-01-01",
+      "payrollDeduction": 240,
+      "notes": "Family health coverage for FY26."
+    },
+    {
+      "seedKey": "benefits-enrollment-jordan-retirement",
+      "employeeName": "Jordan Blake",
+      "planSeedKey": "benefits-plan-retirement-match",
+      "status": "Pending",
+      "effectiveDate": "2026-04-01",
+      "payrollDeduction": 180,
+      "notes": "Awaiting employee confirmation during open enrollment."
+    }
+  ],
   "onboardingWorkflows": [
     {
       "seedKey": "onboarding-elena-torres",

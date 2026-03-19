@@ -600,6 +600,94 @@ set
   verified_at = excluded.verified_at,
   notes = excluded.notes;
 
+insert into public.benefits_plans (
+  organization_id,
+  seed_key,
+  name,
+  provider_name,
+  category,
+  coverage_level,
+  employee_cost,
+  employer_cost,
+  status
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'benefits-plan-health-plus',
+    'Health Plus PPO',
+    'NovaCare',
+    'Health Insurance',
+    'Employee + Family',
+    240,
+    610,
+    'Active'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'benefits-plan-retirement-match',
+    'Retirement Match 401(k)',
+    'FutureNest',
+    'Retirement',
+    'Employee',
+    180,
+    180,
+    'Active'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  name = excluded.name,
+  provider_name = excluded.provider_name,
+  category = excluded.category,
+  coverage_level = excluded.coverage_level,
+  employee_cost = excluded.employee_cost,
+  employer_cost = excluded.employer_cost,
+  status = excluded.status;
+
+insert into public.benefits_enrollments (
+  organization_id,
+  seed_key,
+  employee_id,
+  employee_name,
+  plan_id,
+  status,
+  effective_date,
+  payroll_deduction,
+  notes
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'benefits-enrollment-anika-health',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-anika-raman'),
+    'Anika Raman',
+    (select id from public.benefits_plans where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'benefits-plan-health-plus'),
+    'Active',
+    '2026-01-01',
+    240,
+    'Family health coverage for FY26.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'benefits-enrollment-jordan-retirement',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-jordan-blake'),
+    'Jordan Blake',
+    (select id from public.benefits_plans where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'benefits-plan-retirement-match'),
+    'Pending',
+    '2026-04-01',
+    180,
+    'Awaiting employee confirmation during open enrollment.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  employee_id = excluded.employee_id,
+  employee_name = excluded.employee_name,
+  plan_id = excluded.plan_id,
+  status = excluded.status,
+  effective_date = excluded.effective_date,
+  payroll_deduction = excluded.payroll_deduction,
+  notes = excluded.notes;
+
 insert into public.onboarding_workflows (
   organization_id,
   seed_key,

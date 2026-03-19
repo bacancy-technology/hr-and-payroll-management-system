@@ -213,6 +213,36 @@ create table if not exists public.bank_accounts (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.benefits_plans (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  name text not null,
+  provider_name text not null,
+  category text not null,
+  coverage_level text not null,
+  employee_cost numeric(12, 2) not null default 0 check (employee_cost >= 0),
+  employer_cost numeric(12, 2) not null default 0 check (employer_cost >= 0),
+  status text not null default 'Active',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.benefits_enrollments (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  employee_id uuid references public.employees (id) on delete set null,
+  employee_name text not null,
+  plan_id uuid not null references public.benefits_plans (id) on delete cascade,
+  status text not null default 'Pending',
+  effective_date date not null,
+  end_date date,
+  payroll_deduction numeric(12, 2) not null default 0 check (payroll_deduction >= 0),
+  notes text,
+  created_at timestamptz not null default now(),
+  check (end_date is null or end_date >= effective_date)
+);
+
 create table if not exists public.onboarding_workflows (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -394,6 +424,29 @@ update public.bank_accounts set is_primary = false where is_primary is null;
 alter table public.bank_accounts alter column is_primary set default false;
 alter table public.bank_accounts alter column is_primary set not null;
 
+alter table public.benefits_plans add column if not exists seed_key text;
+update public.benefits_plans set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.benefits_plans alter column seed_key set default gen_random_uuid()::text;
+alter table public.benefits_plans alter column seed_key set not null;
+
+alter table public.benefits_enrollments add column if not exists seed_key text;
+update public.benefits_enrollments set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.benefits_enrollments alter column seed_key set default gen_random_uuid()::text;
+alter table public.benefits_enrollments alter column seed_key set not null;
+alter table public.benefits_enrollments add column if not exists employee_id uuid references public.employees (id) on delete set null;
+alter table public.benefits_enrollments add column if not exists end_date date;
+alter table public.benefits_enrollments add column if not exists payroll_deduction numeric(12, 2);
+update public.benefits_enrollments set payroll_deduction = 0 where payroll_deduction is null;
+alter table public.benefits_enrollments alter column payroll_deduction set default 0;
+alter table public.benefits_enrollments alter column payroll_deduction set not null;
+alter table public.benefits_enrollments add column if not exists notes text;
+update public.benefits_enrollments
+set employee_id = employees.id
+from public.employees as employees
+where public.benefits_enrollments.employee_id is null
+  and public.benefits_enrollments.organization_id = employees.organization_id
+  and public.benefits_enrollments.employee_name = employees.full_name;
+
 alter table public.onboarding_workflows add column if not exists seed_key text;
 update public.onboarding_workflows set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.onboarding_workflows alter column seed_key set default gen_random_uuid()::text;
@@ -437,6 +490,10 @@ create index if not exists documents_organization_id_idx on public.documents (or
 create index if not exists documents_entity_idx on public.documents (entity_type, entity_id);
 create index if not exists bank_accounts_organization_id_idx on public.bank_accounts (organization_id);
 create index if not exists bank_accounts_employee_id_idx on public.bank_accounts (employee_id);
+create index if not exists benefits_plans_organization_id_idx on public.benefits_plans (organization_id);
+create index if not exists benefits_enrollments_organization_id_idx on public.benefits_enrollments (organization_id);
+create index if not exists benefits_enrollments_employee_id_idx on public.benefits_enrollments (employee_id);
+create index if not exists benefits_enrollments_plan_id_idx on public.benefits_enrollments (plan_id);
 create index if not exists onboarding_workflows_organization_id_idx on public.onboarding_workflows (organization_id);
 create index if not exists onboarding_workflows_employee_id_idx on public.onboarding_workflows (employee_id);
 create index if not exists onboarding_tasks_organization_id_idx on public.onboarding_tasks (organization_id);
@@ -479,6 +536,10 @@ create unique index if not exists bank_accounts_organization_seed_key_idx
 create unique index if not exists bank_accounts_primary_employee_idx
   on public.bank_accounts (employee_id)
   where is_primary;
+create unique index if not exists benefits_plans_organization_seed_key_idx
+  on public.benefits_plans (organization_id, seed_key);
+create unique index if not exists benefits_enrollments_organization_seed_key_idx
+  on public.benefits_enrollments (organization_id, seed_key);
 create unique index if not exists onboarding_workflows_organization_seed_key_idx
   on public.onboarding_workflows (organization_id, seed_key);
 create unique index if not exists onboarding_tasks_organization_seed_key_idx
@@ -511,6 +572,8 @@ alter table public.expenses enable row level security;
 alter table public.approvals enable row level security;
 alter table public.documents enable row level security;
 alter table public.bank_accounts enable row level security;
+alter table public.benefits_plans enable row level security;
+alter table public.benefits_enrollments enable row level security;
 alter table public.onboarding_workflows enable row level security;
 alter table public.onboarding_tasks enable row level security;
 alter table public.announcements enable row level security;
@@ -890,6 +953,64 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete bank accounts in their organization" on public.bank_accounts;
 create policy "users can delete bank accounts in their organization"
 on public.bank_accounts
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read benefits plans in their organization" on public.benefits_plans;
+create policy "users can read benefits plans in their organization"
+on public.benefits_plans
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert benefits plans in their organization" on public.benefits_plans;
+create policy "users can insert benefits plans in their organization"
+on public.benefits_plans
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update benefits plans in their organization" on public.benefits_plans;
+create policy "users can update benefits plans in their organization"
+on public.benefits_plans
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete benefits plans in their organization" on public.benefits_plans;
+create policy "users can delete benefits plans in their organization"
+on public.benefits_plans
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read benefits enrollments in their organization" on public.benefits_enrollments;
+create policy "users can read benefits enrollments in their organization"
+on public.benefits_enrollments
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert benefits enrollments in their organization" on public.benefits_enrollments;
+create policy "users can insert benefits enrollments in their organization"
+on public.benefits_enrollments
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update benefits enrollments in their organization" on public.benefits_enrollments;
+create policy "users can update benefits enrollments in their organization"
+on public.benefits_enrollments
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete benefits enrollments in their organization" on public.benefits_enrollments;
+create policy "users can delete benefits enrollments in their organization"
+on public.benefits_enrollments
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

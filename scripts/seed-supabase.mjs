@@ -219,6 +219,18 @@ async function main() {
 
   const onboardingTasksSeed = seedData.onboardingTasks ?? [];
   const bankAccountsSeed = seedData.bankAccounts ?? [];
+  const benefitsPlans = (seedData.benefitsPlans ?? []).map((plan) => ({
+    organization_id: organizationId,
+    seed_key: plan.seedKey,
+    name: plan.name,
+    provider_name: plan.providerName,
+    category: plan.category,
+    coverage_level: plan.coverageLevel,
+    employee_cost: plan.employeeCost,
+    employer_cost: plan.employerCost,
+    status: plan.status,
+  }));
+  const benefitsEnrollmentsSeed = seedData.benefitsEnrollments ?? [];
 
   const announcements = seedData.announcements.map((announcement) => ({
     organization_id: organizationId,
@@ -229,7 +241,7 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: expensesError }, { error: announcementsError }] =
+  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: expensesError }, { error: benefitsPlansError }, { error: announcementsError }] =
     await Promise.all([
       supabase.from("employees").upsert(employees, {
         onConflict: "organization_id,seed_key",
@@ -247,6 +259,9 @@ async function main() {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("expenses").upsert(expenses, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("benefits_plans").upsert(benefitsPlans, {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("announcements").upsert(announcements, {
@@ -276,6 +291,10 @@ async function main() {
 
   if (expensesError) {
     throw new Error(`Failed to seed expenses: ${expensesError.message}`);
+  }
+
+  if (benefitsPlansError) {
+    throw new Error(`Failed to seed benefits plans: ${benefitsPlansError.message}`);
   }
 
   if (announcementsError) {
@@ -448,6 +467,38 @@ async function main() {
 
   const expenseIdBySeedKey = new Map(expenseRows.map((expense) => [expense.seed_key, expense.id]));
 
+  const { data: benefitsPlanRows, error: benefitsPlanRowsError } = await supabase
+    .from("benefits_plans")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (benefitsPlanRowsError) {
+    throw new Error(`Failed to load benefits plans after seeding: ${benefitsPlanRowsError.message}`);
+  }
+
+  const benefitsPlanIdBySeedKey = new Map(benefitsPlanRows.map((plan) => [plan.seed_key, plan.id]));
+
+  const benefitsEnrollments = benefitsEnrollmentsSeed.map((enrollment) => ({
+    organization_id: organizationId,
+    seed_key: enrollment.seedKey,
+    employee_id: employeeIdBySeedKey.get(employeeIdByName.get(enrollment.employeeName)) ?? null,
+    employee_name: enrollment.employeeName,
+    plan_id: benefitsPlanIdBySeedKey.get(enrollment.planSeedKey) ?? null,
+    status: enrollment.status,
+    effective_date: enrollment.effectiveDate,
+    end_date: enrollment.endDate ?? null,
+    payroll_deduction: enrollment.payrollDeduction,
+    notes: enrollment.notes ?? null,
+  }));
+
+  const { error: benefitsEnrollmentsError } = await supabase.from("benefits_enrollments").upsert(benefitsEnrollments, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (benefitsEnrollmentsError) {
+    throw new Error(`Failed to seed benefits enrollments: ${benefitsEnrollmentsError.message}`);
+  }
+
   const timeEntries = seedData.timeEntries.map((entry) => ({
     organization_id: organizationId,
     seed_key: entry.seedKey,
@@ -573,6 +624,8 @@ async function main() {
   console.log(`Time entries: ${timeEntries.length}`);
   console.log(`Leave requests: ${leaveRequests.length}`);
   console.log(`Expenses: ${expenses.length}`);
+  console.log(`Benefits plans: ${benefitsPlans.length}`);
+  console.log(`Benefits enrollments: ${benefitsEnrollments.length}`);
   console.log(`Approvals: ${approvals.length}`);
   console.log(`Documents: ${documents.length}`);
   console.log(`Bank accounts: ${bankAccounts.length}`);

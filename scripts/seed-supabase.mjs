@@ -187,6 +187,24 @@ async function main() {
     approver_name: request.approverName,
   }));
 
+  const expenses = (seedData.expenses ?? []).map((expense) => ({
+    organization_id: organizationId,
+    seed_key: expense.seedKey,
+    employee_id: null,
+    employee_name: expense.employeeName,
+    category: expense.category,
+    description: expense.description,
+    amount: expense.amount,
+    currency: expense.currency,
+    incurred_on: expense.incurredOn,
+    status: expense.status,
+    approver_name: expense.approverName,
+    notes: expense.notes ?? null,
+    receipt_file_name: expense.receiptFileName ?? null,
+    receipt_storage_path: expense.receiptStoragePath ?? null,
+    receipt_mime_type: expense.receiptMimeType ?? null,
+  }));
+
   const onboardingWorkflows = (seedData.onboardingWorkflows ?? []).map((workflow) => ({
     organization_id: organizationId,
     seed_key: workflow.seedKey,
@@ -211,7 +229,7 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: announcementsError }] =
+  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: leaveError }, { error: expensesError }, { error: announcementsError }] =
     await Promise.all([
       supabase.from("employees").upsert(employees, {
         onConflict: "organization_id,seed_key",
@@ -226,6 +244,9 @@ async function main() {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("leave_requests").upsert(leaveRequests, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("expenses").upsert(expenses, {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("announcements").upsert(announcements, {
@@ -251,6 +272,10 @@ async function main() {
 
   if (leaveError) {
     throw new Error(`Failed to seed leave requests: ${leaveError.message}`);
+  }
+
+  if (expensesError) {
+    throw new Error(`Failed to seed expenses: ${expensesError.message}`);
   }
 
   if (announcementsError) {
@@ -338,6 +363,19 @@ async function main() {
     throw new Error(`Failed to update leave requests with employee references: ${leaveRequestsWithEmployeesError.message}`);
   }
 
+  const expensesWithEmployeeIds = expenses.map((expense) => ({
+    ...expense,
+    employee_id: employeeIdBySeedKey.get(employeeIdByName.get(expense.employee_name)) ?? null,
+  }));
+
+  const { error: expensesWithEmployeesError } = await supabase.from("expenses").upsert(expensesWithEmployeeIds, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (expensesWithEmployeesError) {
+    throw new Error(`Failed to update expenses with employee references: ${expensesWithEmployeesError.message}`);
+  }
+
   const primaryEmployeeIds = new Set(
     bankAccounts.filter((account) => account.is_primary && account.employee_id).map((account) => account.employee_id),
   );
@@ -399,6 +437,17 @@ async function main() {
 
   const leaveRequestIdBySeedKey = new Map(leaveRequestRows.map((request) => [request.seed_key, request.id]));
 
+  const { data: expenseRows, error: expenseRowsError } = await supabase
+    .from("expenses")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (expenseRowsError) {
+    throw new Error(`Failed to load expenses after seeding: ${expenseRowsError.message}`);
+  }
+
+  const expenseIdBySeedKey = new Map(expenseRows.map((expense) => [expense.seed_key, expense.id]));
+
   const timeEntries = seedData.timeEntries.map((entry) => ({
     organization_id: organizationId,
     seed_key: entry.seedKey,
@@ -446,7 +495,12 @@ async function main() {
     organization_id: organizationId,
     seed_key: approval.seedKey,
     entity_type: approval.entityType,
-    entity_id: leaveRequestIdBySeedKey.get(approval.entitySeedKey) ?? null,
+    entity_id:
+      approval.entityType === "leave_request"
+        ? leaveRequestIdBySeedKey.get(approval.entitySeedKey) ?? null
+        : approval.entityType === "expense"
+          ? expenseIdBySeedKey.get(approval.entitySeedKey) ?? null
+          : null,
     requested_by_name: approval.requestedByName,
     assigned_to_name: approval.assignedToName,
     status: approval.status,
@@ -518,6 +572,7 @@ async function main() {
   console.log(`Pay periods: ${payPeriods.length}`);
   console.log(`Time entries: ${timeEntries.length}`);
   console.log(`Leave requests: ${leaveRequests.length}`);
+  console.log(`Expenses: ${expenses.length}`);
   console.log(`Approvals: ${approvals.length}`);
   console.log(`Documents: ${documents.length}`);
   console.log(`Bank accounts: ${bankAccounts.length}`);

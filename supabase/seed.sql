@@ -325,6 +325,74 @@ set
   status = excluded.status,
   approver_name = excluded.approver_name;
 
+insert into public.expenses (
+  organization_id,
+  seed_key,
+  employee_id,
+  employee_name,
+  category,
+  description,
+  amount,
+  currency,
+  incurred_on,
+  status,
+  approver_name,
+  notes,
+  receipt_file_name,
+  receipt_storage_path,
+  receipt_mime_type
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'expense-jordan-home-office',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-jordan-blake'),
+    'Jordan Blake',
+    'Home Office',
+    'Ergonomic chair for remote workspace',
+    420,
+    'USD',
+    '2026-03-14',
+    'Approved',
+    'Mina Carter',
+    'Approved under the annual home office stipend.',
+    'jordan-chair-receipt.pdf',
+    'documents/expenses/jordan-blake/chair-receipt.pdf',
+    'application/pdf'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'expense-priya-travel',
+    (select id from public.employees where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'employee-priya-nair'),
+    'Priya Nair',
+    'Travel',
+    'Taxi and airport transfer for payroll vendor meeting',
+    96.50,
+    'USD',
+    '2026-03-17',
+    'Pending',
+    'Anika Raman',
+    'Awaiting manager review.',
+    'priya-travel-receipt.pdf',
+    'documents/expenses/priya-nair/travel-receipt.pdf',
+    'application/pdf'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  employee_id = excluded.employee_id,
+  employee_name = excluded.employee_name,
+  category = excluded.category,
+  description = excluded.description,
+  amount = excluded.amount,
+  currency = excluded.currency,
+  incurred_on = excluded.incurred_on,
+  status = excluded.status,
+  approver_name = excluded.approver_name,
+  notes = excluded.notes,
+  receipt_file_name = excluded.receipt_file_name,
+  receipt_storage_path = excluded.receipt_storage_path,
+  receipt_mime_type = excluded.receipt_mime_type;
+
 insert into public.approvals (
   organization_id,
   seed_key,
@@ -368,6 +436,28 @@ values
     'Priya Nair',
     'In Review',
     'Waiting for payroll close timing confirmation.',
+    null
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'approval-expense-jordan-home-office',
+    'expense',
+    (select id from public.expenses where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'expense-jordan-home-office'),
+    'Jordan Blake',
+    'Mina Carter',
+    'Approved',
+    'Approved under the annual home office stipend.',
+    '2026-03-18T10:00:00Z'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'approval-expense-priya-travel',
+    'expense',
+    (select id from public.expenses where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'expense-priya-travel'),
+    'Priya Nair',
+    'Anika Raman',
+    'Pending',
+    'Awaiting manager review.',
     null
   )
 on conflict (organization_id, seed_key) do update

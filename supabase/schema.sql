@@ -143,6 +143,27 @@ create table if not exists public.leave_requests (
   check (end_date >= start_date)
 );
 
+create table if not exists public.expenses (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  employee_id uuid references public.employees (id) on delete set null,
+  employee_name text not null,
+  category text not null,
+  description text not null,
+  amount numeric(12, 2) not null check (amount >= 0),
+  currency text not null default 'USD',
+  incurred_on date not null,
+  status text not null default 'Pending',
+  approver_name text not null,
+  notes text,
+  receipt_file_name text,
+  receipt_storage_path text,
+  receipt_mime_type text,
+  reimbursed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.approvals (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -333,6 +354,23 @@ where public.leave_requests.employee_id is null
   and public.leave_requests.organization_id = employees.organization_id
   and public.leave_requests.employee_name = employees.full_name;
 
+alter table public.expenses add column if not exists seed_key text;
+update public.expenses set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.expenses alter column seed_key set default gen_random_uuid()::text;
+alter table public.expenses alter column seed_key set not null;
+alter table public.expenses add column if not exists employee_id uuid references public.employees (id) on delete set null;
+alter table public.expenses add column if not exists notes text;
+alter table public.expenses add column if not exists receipt_file_name text;
+alter table public.expenses add column if not exists receipt_storage_path text;
+alter table public.expenses add column if not exists receipt_mime_type text;
+alter table public.expenses add column if not exists reimbursed_at timestamptz;
+update public.expenses
+set employee_id = employees.id
+from public.employees as employees
+where public.expenses.employee_id is null
+  and public.expenses.organization_id = employees.organization_id
+  and public.expenses.employee_name = employees.full_name;
+
 alter table public.approvals add column if not exists seed_key text;
 update public.approvals set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.approvals alter column seed_key set default gen_random_uuid()::text;
@@ -391,6 +429,8 @@ create index if not exists pay_periods_organization_id_idx on public.pay_periods
 create index if not exists time_entries_organization_id_idx on public.time_entries (organization_id);
 create index if not exists time_entries_employee_id_idx on public.time_entries (employee_id);
 create index if not exists leave_requests_organization_id_idx on public.leave_requests (organization_id);
+create index if not exists expenses_organization_id_idx on public.expenses (organization_id);
+create index if not exists expenses_employee_id_idx on public.expenses (employee_id);
 create index if not exists approvals_organization_id_idx on public.approvals (organization_id);
 create index if not exists approvals_entity_idx on public.approvals (entity_type, entity_id);
 create index if not exists documents_organization_id_idx on public.documents (organization_id);
@@ -428,6 +468,8 @@ create unique index if not exists time_entries_organization_seed_key_idx
   on public.time_entries (organization_id, seed_key);
 create unique index if not exists leave_requests_organization_seed_key_idx
   on public.leave_requests (organization_id, seed_key);
+create unique index if not exists expenses_organization_seed_key_idx
+  on public.expenses (organization_id, seed_key);
 create unique index if not exists approvals_organization_seed_key_idx
   on public.approvals (organization_id, seed_key);
 create unique index if not exists documents_organization_seed_key_idx
@@ -465,6 +507,7 @@ alter table public.payroll_items enable row level security;
 alter table public.pay_periods enable row level security;
 alter table public.time_entries enable row level security;
 alter table public.leave_requests enable row level security;
+alter table public.expenses enable row level security;
 alter table public.approvals enable row level security;
 alter table public.documents enable row level security;
 alter table public.bank_accounts enable row level security;
@@ -731,6 +774,35 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete leave requests in their organization" on public.leave_requests;
 create policy "users can delete leave requests in their organization"
 on public.leave_requests
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read expenses in their organization" on public.expenses;
+create policy "users can read expenses in their organization"
+on public.expenses
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert expenses in their organization" on public.expenses;
+create policy "users can insert expenses in their organization"
+on public.expenses
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update expenses in their organization" on public.expenses;
+create policy "users can update expenses in their organization"
+on public.expenses
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete expenses in their organization" on public.expenses;
+create policy "users can delete expenses in their organization"
+on public.expenses
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

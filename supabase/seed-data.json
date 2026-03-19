@@ -288,6 +288,38 @@
       "approverName": "Priya Nair"
     }
   ],
+  "expenses": [
+    {
+      "seedKey": "expense-jordan-home-office",
+      "employeeName": "Jordan Blake",
+      "category": "Home Office",
+      "description": "Ergonomic chair for remote workspace",
+      "amount": 420,
+      "currency": "USD",
+      "incurredOn": "2026-03-14",
+      "status": "Approved",
+      "approverName": "Mina Carter",
+      "notes": "Approved under the annual home office stipend.",
+      "receiptFileName": "jordan-chair-receipt.pdf",
+      "receiptStoragePath": "documents/expenses/jordan-blake/chair-receipt.pdf",
+      "receiptMimeType": "application/pdf"
+    },
+    {
+      "seedKey": "expense-priya-travel",
+      "employeeName": "Priya Nair",
+      "category": "Travel",
+      "description": "Taxi and airport transfer for payroll vendor meeting",
+      "amount": 96.5,
+      "currency": "USD",
+      "incurredOn": "2026-03-17",
+      "status": "Pending",
+      "approverName": "Anika Raman",
+      "notes": "Awaiting manager review.",
+      "receiptFileName": "priya-travel-receipt.pdf",
+      "receiptStoragePath": "documents/expenses/priya-nair/travel-receipt.pdf",
+      "receiptMimeType": "application/pdf"
+    }
+  ],
   "approvals": [
     {
       "seedKey": "approval-leave-marcus-lee",
@@ -315,6 +347,24 @@
       "assignedToName": "Priya Nair",
       "status": "In Review",
       "decisionNote": "Waiting for payroll close timing confirmation."
+    },
+    {
+      "seedKey": "approval-expense-jordan-home-office",
+      "entityType": "expense",
+      "entitySeedKey": "expense-jordan-home-office",
+      "requestedByName": "Jordan Blake",
+      "assignedToName": "Mina Carter",
+      "status": "Approved",
+      "decisionNote": "Approved under the annual home office stipend."
+    },
+    {
+      "seedKey": "approval-expense-priya-travel",
+      "entityType": "expense",
+      "entitySeedKey": "expense-priya-travel",
+      "requestedByName": "Priya Nair",
+      "assignedToName": "Anika Raman",
+      "status": "Pending",
+      "decisionNote": "Awaiting manager review."
     }
   ],
   "documents": [

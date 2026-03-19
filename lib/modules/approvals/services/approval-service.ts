@@ -178,22 +178,38 @@ async function syncEntityStatus(
   organizationId: string,
   approval: ReturnType<typeof normalizeApproval>,
 ) {
-  if (approval.entityType !== "leave_request") {
+  if (approval.entityType === "leave_request") {
+    const { error } = await supabase
+      .from("leave_requests")
+      .update({
+        status: approval.status,
+        approver_name: approval.assignedToName,
+        notes: approval.decisionNote ?? null,
+      })
+      .eq("organization_id", organizationId)
+      .eq("id", approval.entityId);
+
+    if (error) {
+      throw new ApiError(500, "Failed to sync the approval decision to the PTO request.", error.message);
+    }
+
     return;
   }
 
-  const { error } = await supabase
-    .from("leave_requests")
-    .update({
-      status: approval.status,
-      approver_name: approval.assignedToName,
-      notes: approval.decisionNote ?? null,
-    })
-    .eq("organization_id", organizationId)
-    .eq("id", approval.entityId);
+  if (approval.entityType === "expense") {
+    const { error } = await supabase
+      .from("expenses")
+      .update({
+        status: approval.status,
+        approver_name: approval.assignedToName,
+        notes: approval.decisionNote ?? null,
+      })
+      .eq("organization_id", organizationId)
+      .eq("id", approval.entityId);
 
-  if (error) {
-    throw new ApiError(500, "Failed to sync the approval decision to the PTO request.", error.message);
+    if (error) {
+      throw new ApiError(500, "Failed to sync the approval decision to the expense.", error.message);
+    }
   }
 }
 

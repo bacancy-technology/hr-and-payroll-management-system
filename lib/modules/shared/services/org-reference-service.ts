@@ -88,3 +88,26 @@ export async function getWorkersCompPolicySummaryInOrganization(
 
   return data;
 }
+
+export async function getIntegrationSummaryInOrganization(
+  supabase: AuthenticatedSupabaseClient,
+  organizationId: string,
+  integrationId: string,
+) {
+  const { data, error } = await supabase
+    .from("integrations")
+    .select("id, provider, display_name")
+    .eq("organization_id", organizationId)
+    .eq("id", integrationId)
+    .maybeSingle();
+
+  if (error) {
+    throw new ApiError(500, "Failed to load the integration reference.", error.message);
+  }
+
+  if (!data) {
+    throw new ApiError(404, "Integration not found.");
+  }
+
+  return data;
+}

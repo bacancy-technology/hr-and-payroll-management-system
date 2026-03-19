@@ -725,6 +725,154 @@ set
   case_manager_name = excluded.case_manager_name,
   case_manager_email = excluded.case_manager_email;
 
+insert into public.integrations (
+  organization_id,
+  seed_key,
+  provider,
+  display_name,
+  category,
+  status,
+  connection_mode,
+  scopes,
+  config,
+  external_account_id,
+  webhook_secret_hint,
+  last_synced_at
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'integration-quickbooks',
+    'quickbooks',
+    'QuickBooks Online',
+    'Accounting',
+    'Connected',
+    'OAuth',
+    '["vendors:read", "journal_entries:write", "employees:read"]'::jsonb,
+    '{"environment":"sandbox","region":"us"}'::jsonb,
+    'qb-sandbox-northstar',
+    'qbsk_...8af2',
+    '2026-03-19T07:30:00Z'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'integration-slack',
+    'slack',
+    'Slack Workspace',
+    'Communication',
+    'Connected',
+    'OAuth',
+    '["channels:read", "chat:write", "users:read"]'::jsonb,
+    '{"workspace":"northstar-ops","defaultChannel":"#payroll-alerts"}'::jsonb,
+    'T04NORTHSTAR',
+    'slwh_...2c51',
+    '2026-03-19T06:45:00Z'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  provider = excluded.provider,
+  display_name = excluded.display_name,
+  category = excluded.category,
+  status = excluded.status,
+  connection_mode = excluded.connection_mode,
+  scopes = excluded.scopes,
+  config = excluded.config,
+  external_account_id = excluded.external_account_id,
+  webhook_secret_hint = excluded.webhook_secret_hint,
+  last_synced_at = excluded.last_synced_at;
+
+insert into public.integration_sync_runs (
+  organization_id,
+  seed_key,
+  integration_id,
+  trigger_source,
+  status,
+  started_at,
+  completed_at,
+  records_processed,
+  summary
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'integration-sync-quickbooks-2026-03-19',
+    (select id from public.integrations where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'integration-quickbooks'),
+    'manual',
+    'Completed',
+    '2026-03-19T07:25:00Z',
+    '2026-03-19T07:30:00Z',
+    42,
+    'Synced payroll journal entries and vendor reimbursements.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'integration-sync-slack-2026-03-18',
+    (select id from public.integrations where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'integration-slack'),
+    'scheduled',
+    'Completed',
+    '2026-03-18T15:00:00Z',
+    '2026-03-18T15:01:00Z',
+    6,
+    'Delivered approval reminders and payroll calendar notifications.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  integration_id = excluded.integration_id,
+  trigger_source = excluded.trigger_source,
+  status = excluded.status,
+  started_at = excluded.started_at,
+  completed_at = excluded.completed_at,
+  records_processed = excluded.records_processed,
+  summary = excluded.summary;
+
+insert into public.webhook_events (
+  organization_id,
+  seed_key,
+  integration_id,
+  provider,
+  event_type,
+  delivery_status,
+  external_event_id,
+  payload,
+  processed_at,
+  error_message
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'webhook-event-quickbooks-payroll-journal',
+    (select id from public.integrations where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'integration-quickbooks'),
+    'quickbooks',
+    'journal_entry.updated',
+    'Processed',
+    'evt_qb_20260319_001',
+    '{"journalEntryId":"4319","status":"posted"}'::jsonb,
+    '2026-03-19T07:31:00Z',
+    null
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'webhook-event-slack-approval-reminder',
+    (select id from public.integrations where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'integration-slack'),
+    'slack',
+    'message.delivered',
+    'Received',
+    'evt_sl_20260318_114',
+    '{"channel":"#payroll-alerts","messageTs":"1710860460.102300"}'::jsonb,
+    null,
+    null
+  )
+on conflict (organization_id, seed_key) do update
+set
+  integration_id = excluded.integration_id,
+  provider = excluded.provider,
+  event_type = excluded.event_type,
+  delivery_status = excluded.delivery_status,
+  external_event_id = excluded.external_event_id,
+  payload = excluded.payload,
+  processed_at = excluded.processed_at,
+  error_message = excluded.error_message;
+
 insert into public.approvals (
   organization_id,
   seed_key,

@@ -18,6 +18,30 @@ export async function readJsonBody(request: Request) {
   return body;
 }
 
+export function readOptionalObject(record: UnknownRecord, key: string) {
+  const value = record[key];
+
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (!isObject(value)) {
+    throw new ApiError(400, `${key} must be a JSON object.`);
+  }
+
+  return value;
+}
+
+export function readRequiredObject(record: UnknownRecord, key: string, label: string) {
+  const value = readOptionalObject(record, key);
+
+  if (!value) {
+    throw new ApiError(400, `${label} is required.`);
+  }
+
+  return value;
+}
+
 export function readRequiredString(record: UnknownRecord, key: string, label: string) {
   const value = record[key];
 

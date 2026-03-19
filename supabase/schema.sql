@@ -279,6 +279,52 @@ create table if not exists public.workers_comp_claims (
   check (reported_date >= incident_date)
 );
 
+create table if not exists public.integrations (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  provider text not null,
+  display_name text not null,
+  category text not null,
+  status text not null default 'Disconnected',
+  connection_mode text not null default 'OAuth',
+  scopes jsonb not null default '[]'::jsonb,
+  config jsonb not null default '{}'::jsonb,
+  external_account_id text,
+  webhook_secret_hint text,
+  last_synced_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.integration_sync_runs (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  integration_id uuid not null references public.integrations (id) on delete cascade,
+  trigger_source text not null,
+  status text not null default 'Queued',
+  started_at timestamptz,
+  completed_at timestamptz,
+  records_processed integer not null default 0 check (records_processed >= 0),
+  summary text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.webhook_events (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  integration_id uuid references public.integrations (id) on delete set null,
+  provider text not null,
+  event_type text not null,
+  delivery_status text not null default 'Received',
+  external_event_id text,
+  payload jsonb not null default '{}'::jsonb,
+  processed_at timestamptz,
+  error_message text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.approvals (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -624,6 +670,54 @@ where public.workers_comp_claims.employee_id is null
   and public.workers_comp_claims.organization_id = employees.organization_id
   and public.workers_comp_claims.employee_name = employees.full_name;
 
+alter table public.integrations add column if not exists seed_key text;
+update public.integrations set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.integrations alter column seed_key set default gen_random_uuid()::text;
+alter table public.integrations alter column seed_key set not null;
+alter table public.integrations add column if not exists scopes jsonb;
+update public.integrations set scopes = '[]'::jsonb where scopes is null;
+alter table public.integrations alter column scopes set default '[]'::jsonb;
+alter table public.integrations alter column scopes set not null;
+alter table public.integrations add column if not exists config jsonb;
+update public.integrations set config = '{}'::jsonb where config is null;
+alter table public.integrations alter column config set default '{}'::jsonb;
+alter table public.integrations alter column config set not null;
+alter table public.integrations add column if not exists display_name text;
+update public.integrations set display_name = coalesce(display_name, provider, 'Integration');
+alter table public.integrations alter column display_name set not null;
+alter table public.integrations add column if not exists connection_mode text;
+update public.integrations set connection_mode = 'OAuth' where connection_mode is null;
+alter table public.integrations alter column connection_mode set default 'OAuth';
+alter table public.integrations alter column connection_mode set not null;
+alter table public.integrations add column if not exists external_account_id text;
+alter table public.integrations add column if not exists webhook_secret_hint text;
+alter table public.integrations add column if not exists last_synced_at timestamptz;
+
+alter table public.integration_sync_runs add column if not exists seed_key text;
+update public.integration_sync_runs set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.integration_sync_runs alter column seed_key set default gen_random_uuid()::text;
+alter table public.integration_sync_runs alter column seed_key set not null;
+alter table public.integration_sync_runs add column if not exists started_at timestamptz;
+alter table public.integration_sync_runs add column if not exists completed_at timestamptz;
+alter table public.integration_sync_runs add column if not exists records_processed integer;
+update public.integration_sync_runs set records_processed = 0 where records_processed is null;
+alter table public.integration_sync_runs alter column records_processed set default 0;
+alter table public.integration_sync_runs alter column records_processed set not null;
+alter table public.integration_sync_runs add column if not exists summary text;
+
+alter table public.webhook_events add column if not exists seed_key text;
+update public.webhook_events set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.webhook_events alter column seed_key set default gen_random_uuid()::text;
+alter table public.webhook_events alter column seed_key set not null;
+alter table public.webhook_events add column if not exists integration_id uuid references public.integrations (id) on delete set null;
+alter table public.webhook_events add column if not exists external_event_id text;
+alter table public.webhook_events add column if not exists payload jsonb;
+update public.webhook_events set payload = '{}'::jsonb where payload is null;
+alter table public.webhook_events alter column payload set default '{}'::jsonb;
+alter table public.webhook_events alter column payload set not null;
+alter table public.webhook_events add column if not exists processed_at timestamptz;
+alter table public.webhook_events add column if not exists error_message text;
+
 alter table public.approvals add column if not exists seed_key text;
 update public.approvals set seed_key = gen_random_uuid()::text where seed_key is null;
 alter table public.approvals alter column seed_key set default gen_random_uuid()::text;
@@ -745,6 +839,11 @@ create index if not exists workers_comp_policies_organization_id_idx on public.w
 create index if not exists workers_comp_claims_organization_id_idx on public.workers_comp_claims (organization_id);
 create index if not exists workers_comp_claims_employee_id_idx on public.workers_comp_claims (employee_id);
 create index if not exists workers_comp_claims_policy_id_idx on public.workers_comp_claims (policy_id);
+create index if not exists integrations_organization_id_idx on public.integrations (organization_id);
+create index if not exists integration_sync_runs_organization_id_idx on public.integration_sync_runs (organization_id);
+create index if not exists integration_sync_runs_integration_id_idx on public.integration_sync_runs (integration_id);
+create index if not exists webhook_events_organization_id_idx on public.webhook_events (organization_id);
+create index if not exists webhook_events_integration_id_idx on public.webhook_events (integration_id);
 create index if not exists approvals_organization_id_idx on public.approvals (organization_id);
 create index if not exists approvals_entity_idx on public.approvals (entity_type, entity_id);
 create index if not exists documents_organization_id_idx on public.documents (organization_id);
@@ -814,6 +913,12 @@ create unique index if not exists workers_comp_policies_organization_policy_numb
   on public.workers_comp_policies (organization_id, policy_number);
 create unique index if not exists workers_comp_claims_organization_seed_key_idx
   on public.workers_comp_claims (organization_id, seed_key);
+create unique index if not exists integrations_organization_seed_key_idx
+  on public.integrations (organization_id, seed_key);
+create unique index if not exists integration_sync_runs_organization_seed_key_idx
+  on public.integration_sync_runs (organization_id, seed_key);
+create unique index if not exists webhook_events_organization_seed_key_idx
+  on public.webhook_events (organization_id, seed_key);
 create unique index if not exists approvals_organization_seed_key_idx
   on public.approvals (organization_id, seed_key);
 create unique index if not exists documents_organization_seed_key_idx
@@ -868,6 +973,9 @@ alter table public.compliance_alerts enable row level security;
 alter table public.tax_filings enable row level security;
 alter table public.workers_comp_policies enable row level security;
 alter table public.workers_comp_claims enable row level security;
+alter table public.integrations enable row level security;
+alter table public.integration_sync_runs enable row level security;
+alter table public.webhook_events enable row level security;
 alter table public.approvals enable row level security;
 alter table public.documents enable row level security;
 alter table public.bank_accounts enable row level security;
@@ -1399,6 +1507,93 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete workers comp claims in their organization" on public.workers_comp_claims;
 create policy "users can delete workers comp claims in their organization"
 on public.workers_comp_claims
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read integrations in their organization" on public.integrations;
+create policy "users can read integrations in their organization"
+on public.integrations
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert integrations in their organization" on public.integrations;
+create policy "users can insert integrations in their organization"
+on public.integrations
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update integrations in their organization" on public.integrations;
+create policy "users can update integrations in their organization"
+on public.integrations
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete integrations in their organization" on public.integrations;
+create policy "users can delete integrations in their organization"
+on public.integrations
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read integration sync runs in their organization" on public.integration_sync_runs;
+create policy "users can read integration sync runs in their organization"
+on public.integration_sync_runs
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert integration sync runs in their organization" on public.integration_sync_runs;
+create policy "users can insert integration sync runs in their organization"
+on public.integration_sync_runs
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update integration sync runs in their organization" on public.integration_sync_runs;
+create policy "users can update integration sync runs in their organization"
+on public.integration_sync_runs
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete integration sync runs in their organization" on public.integration_sync_runs;
+create policy "users can delete integration sync runs in their organization"
+on public.integration_sync_runs
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read webhook events in their organization" on public.webhook_events;
+create policy "users can read webhook events in their organization"
+on public.webhook_events
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert webhook events in their organization" on public.webhook_events;
+create policy "users can insert webhook events in their organization"
+on public.webhook_events
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update webhook events in their organization" on public.webhook_events;
+create policy "users can update webhook events in their organization"
+on public.webhook_events
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete webhook events in their organization" on public.webhook_events;
+create policy "users can delete webhook events in their organization"
+on public.webhook_events
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

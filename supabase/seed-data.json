@@ -512,6 +512,92 @@
       "caseManagerEmail": "rina.kapoor@northbridgeassurance.com"
     }
   ],
+  "integrations": [
+    {
+      "seedKey": "integration-quickbooks",
+      "provider": "quickbooks",
+      "displayName": "QuickBooks Online",
+      "category": "Accounting",
+      "status": "Connected",
+      "connectionMode": "OAuth",
+      "scopes": ["vendors:read", "journal_entries:write", "employees:read"],
+      "config": {
+        "environment": "sandbox",
+        "region": "us"
+      },
+      "externalAccountId": "qb-sandbox-northstar",
+      "webhookSecretHint": "qbsk_...8af2",
+      "lastSyncedAt": "2026-03-19T07:30:00Z"
+    },
+    {
+      "seedKey": "integration-slack",
+      "provider": "slack",
+      "displayName": "Slack Workspace",
+      "category": "Communication",
+      "status": "Connected",
+      "connectionMode": "OAuth",
+      "scopes": ["channels:read", "chat:write", "users:read"],
+      "config": {
+        "workspace": "northstar-ops",
+        "defaultChannel": "#payroll-alerts"
+      },
+      "externalAccountId": "T04NORTHSTAR",
+      "webhookSecretHint": "slwh_...2c51",
+      "lastSyncedAt": "2026-03-19T06:45:00Z"
+    }
+  ],
+  "integrationSyncRuns": [
+    {
+      "seedKey": "integration-sync-quickbooks-2026-03-19",
+      "integrationSeedKey": "integration-quickbooks",
+      "triggerSource": "manual",
+      "status": "Completed",
+      "startedAt": "2026-03-19T07:25:00Z",
+      "completedAt": "2026-03-19T07:30:00Z",
+      "recordsProcessed": 42,
+      "summary": "Synced payroll journal entries and vendor reimbursements."
+    },
+    {
+      "seedKey": "integration-sync-slack-2026-03-18",
+      "integrationSeedKey": "integration-slack",
+      "triggerSource": "scheduled",
+      "status": "Completed",
+      "startedAt": "2026-03-18T15:00:00Z",
+      "completedAt": "2026-03-18T15:01:00Z",
+      "recordsProcessed": 6,
+      "summary": "Delivered approval reminders and payroll calendar notifications."
+    }
+  ],
+  "webhookEvents": [
+    {
+      "seedKey": "webhook-event-quickbooks-payroll-journal",
+      "provider": "quickbooks",
+      "integrationSeedKey": "integration-quickbooks",
+      "eventType": "journal_entry.updated",
+      "deliveryStatus": "Processed",
+      "externalEventId": "evt_qb_20260319_001",
+      "payload": {
+        "journalEntryId": "4319",
+        "status": "posted"
+      },
+      "processedAt": "2026-03-19T07:31:00Z",
+      "errorMessage": null
+    },
+    {
+      "seedKey": "webhook-event-slack-approval-reminder",
+      "provider": "slack",
+      "integrationSeedKey": "integration-slack",
+      "eventType": "message.delivered",
+      "deliveryStatus": "Received",
+      "externalEventId": "evt_sl_20260318_114",
+      "payload": {
+        "channel": "#payroll-alerts",
+        "messageTs": "1710860460.102300"
+      },
+      "processedAt": null,
+      "errorMessage": null
+    }
+  ],
   "approvals": [
     {
       "seedKey": "approval-leave-marcus-lee",

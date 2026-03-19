@@ -315,6 +315,22 @@ async function main() {
     notes: policy.notes ?? null,
   }));
   const workersCompClaimsSeed = seedData.workersCompClaims ?? [];
+  const integrations = (seedData.integrations ?? []).map((integration) => ({
+    organization_id: organizationId,
+    seed_key: integration.seedKey,
+    provider: integration.provider,
+    display_name: integration.displayName,
+    category: integration.category,
+    status: integration.status,
+    connection_mode: integration.connectionMode,
+    scopes: integration.scopes ?? [],
+    config: integration.config ?? {},
+    external_account_id: integration.externalAccountId ?? null,
+    webhook_secret_hint: integration.webhookSecretHint ?? null,
+    last_synced_at: integration.lastSyncedAt ?? null,
+  }));
+  const integrationSyncRunsSeed = seedData.integrationSyncRuns ?? [];
+  const webhookEventsSeed = seedData.webhookEvents ?? [];
 
   const onboardingWorkflows = (seedData.onboardingWorkflows ?? []).map((workflow) => ({
     organization_id: organizationId,
@@ -362,7 +378,7 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: complianceRulesError }, { error: taxFilingsError }, { error: workersCompPoliciesError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
+  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: complianceRulesError }, { error: taxFilingsError }, { error: workersCompPoliciesError }, { error: integrationsError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
     await Promise.all([
       supabase.from("employees").upsert(employees, {
         onConflict: "organization_id,seed_key",
@@ -392,6 +408,9 @@ async function main() {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("workers_comp_policies").upsert(workersCompPolicies, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("integrations").upsert(integrations, {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("benefits_plans").upsert(benefitsPlans, {
@@ -445,6 +464,10 @@ async function main() {
     throw new Error(`Failed to seed workers comp policies: ${workersCompPoliciesError.message}`);
   }
 
+  if (integrationsError) {
+    throw new Error(`Failed to seed integrations: ${integrationsError.message}`);
+  }
+
   if (benefitsPlansError) {
     throw new Error(`Failed to seed benefits plans: ${benefitsPlansError.message}`);
   }
@@ -496,6 +519,17 @@ async function main() {
   const workersCompPolicyNameBySeedKey = new Map(
     workersCompPolicyRows.map((policy) => [policy.seed_key, policy.policy_name]),
   );
+
+  const { data: integrationRows, error: integrationRowsError } = await supabase
+    .from("integrations")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (integrationRowsError) {
+    throw new Error(`Failed to load integrations after seeding: ${integrationRowsError.message}`);
+  }
+
+  const integrationIdBySeedKey = new Map(integrationRows.map((integration) => [integration.seed_key, integration.id]));
 
   const bankAccounts = bankAccountsSeed.map((account) => ({
     organization_id: organizationId,
@@ -768,6 +802,47 @@ async function main() {
     throw new Error(`Failed to seed workers comp claims: ${workersCompClaimsError.message}`);
   }
 
+  const integrationSyncRuns = integrationSyncRunsSeed.map((run) => ({
+    organization_id: organizationId,
+    seed_key: run.seedKey,
+    integration_id: integrationIdBySeedKey.get(run.integrationSeedKey) ?? null,
+    trigger_source: run.triggerSource,
+    status: run.status,
+    started_at: run.startedAt ?? null,
+    completed_at: run.completedAt ?? null,
+    records_processed: run.recordsProcessed ?? 0,
+    summary: run.summary ?? null,
+  }));
+
+  const { error: integrationSyncRunsError } = await supabase.from("integration_sync_runs").upsert(integrationSyncRuns, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (integrationSyncRunsError) {
+    throw new Error(`Failed to seed integration sync runs: ${integrationSyncRunsError.message}`);
+  }
+
+  const webhookEvents = webhookEventsSeed.map((event) => ({
+    organization_id: organizationId,
+    seed_key: event.seedKey,
+    integration_id: integrationIdBySeedKey.get(event.integrationSeedKey) ?? null,
+    provider: event.provider,
+    event_type: event.eventType,
+    delivery_status: event.deliveryStatus,
+    external_event_id: event.externalEventId ?? null,
+    payload: event.payload ?? {},
+    processed_at: event.processedAt ?? null,
+    error_message: event.errorMessage ?? null,
+  }));
+
+  const { error: webhookEventsError } = await supabase.from("webhook_events").upsert(webhookEvents, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (webhookEventsError) {
+    throw new Error(`Failed to seed webhook events: ${webhookEventsError.message}`);
+  }
+
   const timeEntries = seedData.timeEntries.map((entry) => ({
     organization_id: organizationId,
     seed_key: entry.seedKey,
@@ -901,6 +976,9 @@ async function main() {
   console.log(`Tax filings: ${taxFilings.length}`);
   console.log(`Workers comp policies: ${workersCompPolicies.length}`);
   console.log(`Workers comp claims: ${workersCompClaims.length}`);
+  console.log(`Integrations: ${integrations.length}`);
+  console.log(`Integration sync runs: ${integrationSyncRuns.length}`);
+  console.log(`Webhook events: ${webhookEvents.length}`);
   console.log(`Benefits plans: ${benefitsPlans.length}`);
   console.log(`Benefits enrollments: ${benefitsEnrollments.length}`);
   console.log(`Performance review templates: ${performanceReviewTemplates.length}`);

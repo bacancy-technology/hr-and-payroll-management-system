@@ -1,4 +1,5 @@
 import type {
+  AdvancedSchedulingEngine,
   Announcement,
   AutomatedJobPostingIntegration,
   AutomatedComplianceMonitoring,
@@ -815,6 +816,88 @@ export function getDemoGlobalPayrollSupport(): GlobalPayrollSupport {
   };
 }
 
+export function getDemoAdvancedSchedulingEngine(): AdvancedSchedulingEngine {
+  return {
+    generatedAt: "2026-03-20T11:00:00.000Z",
+    summary: {
+      scheduledShifts: 4,
+      employeesScheduled: 4,
+      strongPreferenceMatches: 3,
+      complianceAlerts: 2,
+    },
+    shifts: [
+      {
+        id: "schedule-anika-2026-03-20",
+        employeeId: "emp_001",
+        employeeName: "Anika Raman",
+        department: "People",
+        shiftDate: "2026-03-20",
+        shiftWindow: "09:00-17:30",
+        focusArea: "People Ops desk coverage",
+        preferenceMatch: "Strong",
+        complianceStatus: "Compliant",
+        skills: ["Workforce planning", "Approvals coverage"],
+        optimizationNote: "Anchored to core hours based on prior on-site work pattern and team handoff needs.",
+      },
+      {
+        id: "schedule-jordan-2026-03-21",
+        employeeId: "emp_002",
+        employeeName: "Jordan Blake",
+        department: "Engineering",
+        shiftDate: "2026-03-21",
+        shiftWindow: "10:00-18:00",
+        focusArea: "Platform support and integrations",
+        preferenceMatch: "Strong",
+        complianceStatus: "Watch",
+        skills: ["Backend systems", "Integrations"],
+        optimizationNote: "Remote-first block preserves overlap while keeping overtime drift under review.",
+      },
+      {
+        id: "schedule-priya-2026-03-24",
+        employeeId: "emp_003",
+        employeeName: "Priya Nair",
+        department: "Finance",
+        shiftDate: "2026-03-24",
+        shiftWindow: "08:30-16:30",
+        focusArea: "Payroll close preparation",
+        preferenceMatch: "Strong",
+        complianceStatus: "Compliant",
+        skills: ["Payroll controls", "Reconciliation"],
+        optimizationNote: "Earlier finance coverage aligns with historical start times and payroll-close demand.",
+      },
+      {
+        id: "schedule-elena-2026-03-25",
+        employeeId: "emp_005",
+        employeeName: "Elena Torres",
+        department: "People",
+        shiftDate: "2026-03-25",
+        shiftWindow: "09:30-17:00",
+        focusArea: "Hiring coordination and candidate outreach",
+        preferenceMatch: "Partial",
+        complianceStatus: "Needs Review",
+        skills: ["Hiring coordination", "Employee experience"],
+        optimizationNote: "Coverage is reserved ahead of upcoming travel, but pending time-away should be confirmed before finalizing.",
+      },
+    ],
+    alerts: [
+      {
+        id: "schedule-alert-holi",
+        title: "Holi blocked for India-based scheduling",
+        severity: "Medium",
+        detail: "India coverage on 2026-03-14 was excluded from optimization because Holi is marked as an observed holiday.",
+        recommendedAction: "Shift India-based coverage to adjacent days or route urgent work to global backup coverage.",
+      },
+      {
+        id: "schedule-alert-jordan-overtime",
+        title: "Jordan Blake nearing overtime threshold",
+        severity: "Low",
+        detail: "Recent approved time entries show overtime during the current pay period.",
+        recommendedAction: "Keep Jordan on standard-length coverage blocks until the next pay period resets.",
+      },
+    ],
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -917,6 +1000,7 @@ export function getDemoDashboardData(
     realTimePayrollCostTracking: getDemoRealTimePayrollCostTracking(),
     intelligentDocumentProcessing: getDemoIntelligentDocumentProcessing(),
     globalPayrollSupport: getDemoGlobalPayrollSupport(),
+    advancedSchedulingEngine: getDemoAdvancedSchedulingEngine(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

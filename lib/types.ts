@@ -360,6 +360,40 @@ export interface GlobalPayrollSupport {
   currencies: GlobalPayrollCurrency[];
 }
 
+export interface SchedulingShiftRecommendation {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  shiftDate: string;
+  shiftWindow: string;
+  focusArea: string;
+  preferenceMatch: "Strong" | "Partial" | "Limited";
+  complianceStatus: "Compliant" | "Watch" | "Needs Review";
+  skills: string[];
+  optimizationNote: string;
+}
+
+export interface SchedulingConstraintAlert {
+  id: string;
+  title: string;
+  severity: "Low" | "Medium" | "High";
+  detail: string;
+  recommendedAction: string;
+}
+
+export interface AdvancedSchedulingEngine {
+  generatedAt: string;
+  summary: {
+    scheduledShifts: number;
+    employeesScheduled: number;
+    strongPreferenceMatches: number;
+    complianceAlerts: number;
+  };
+  shifts: SchedulingShiftRecommendation[];
+  alerts: SchedulingConstraintAlert[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -406,6 +440,7 @@ export interface DashboardData {
   realTimePayrollCostTracking: RealTimePayrollCostTracking;
   intelligentDocumentProcessing: IntelligentDocumentProcessing;
   globalPayrollSupport: GlobalPayrollSupport;
+  advancedSchedulingEngine: AdvancedSchedulingEngine;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

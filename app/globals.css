@@ -814,6 +814,68 @@ th {
   background: rgba(255, 255, 255, 0.62);
 }
 
+.scheduling-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.scheduling-card,
+.scheduling-alert-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.scheduling-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scheduling-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(13, 122, 115, 0.08);
+  color: var(--accent);
+  font-size: 0.84rem;
+}
+
+.schedule-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.schedule-status-strong,
+.schedule-status-compliant {
+  color: var(--accent);
+  background: rgba(13, 122, 115, 0.12);
+}
+
+.schedule-status-partial,
+.schedule-status-watch,
+.schedule-status-medium {
+  color: #8b5f16;
+  background: rgba(207, 170, 64, 0.18);
+}
+
+.schedule-status-limited,
+.schedule-status-needs-review,
+.schedule-status-high {
+  color: #8d3325;
+  background: rgba(201, 104, 85, 0.16);
+}
+
 .notice {
   display: flex;
   align-items: flex-start;
@@ -976,6 +1038,7 @@ th {
   .document-field-grid,
   .global-payroll-grid,
   .global-currency-grid,
+  .scheduling-grid,
   .loading-grid {
     grid-template-columns: 1fr;
   }

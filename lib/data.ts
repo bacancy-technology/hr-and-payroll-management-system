@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import {
+  getDemoAdvancedSchedulingEngine,
   getDemoAutomatedJobPostingIntegration,
   getDemoBlockchainPayrollVerification,
   getDemoDashboardData,
@@ -20,6 +21,7 @@ import { getEmployeeWellnessDashboard } from "@/lib/modules/employee-wellness-da
 import { getGlobalPayrollSupport } from "@/lib/modules/global-payroll-support/services/global-payroll-support-service";
 import { getIntelligentDocumentProcessing } from "@/lib/modules/intelligent-document-processing/services/intelligent-document-processing-service";
 import { getRealTimePayrollCostTracking } from "@/lib/modules/real-time-payroll-cost-tracking/services/real-time-payroll-cost-tracking-service";
+import { getAdvancedSchedulingEngine } from "@/lib/modules/advanced-scheduling-engine/services/advanced-scheduling-engine-service";
 import { getBlockchainPayrollVerification } from "@/lib/modules/blockchain-payroll-verification/services/blockchain-payroll-verification-service";
 import { getDynamicOrgChartVisualization } from "@/lib/modules/dynamic-org-chart-visualization/services/dynamic-org-chart-visualization-service";
 import { getAutomatedComplianceMonitoring } from "@/lib/modules/automated-compliance-monitoring/services/automated-compliance-monitoring-service";
@@ -268,6 +270,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const globalPayrollSupport = organizationId
     ? await getGlobalPayrollSupport(supabase, organizationId).catch(() => getDemoGlobalPayrollSupport())
     : getDemoGlobalPayrollSupport();
+  const advancedSchedulingEngine = organizationId
+    ? await getAdvancedSchedulingEngine(supabase, organizationId).catch(() => getDemoAdvancedSchedulingEngine())
+    : getDemoAdvancedSchedulingEngine();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -332,6 +337,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     realTimePayrollCostTracking,
     intelligentDocumentProcessing,
     globalPayrollSupport,
+    advancedSchedulingEngine,
     leaveRequests,
     announcements,
   };

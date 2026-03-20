@@ -12,6 +12,7 @@ import { WellnessDashboardPanel } from "@/components/employee-wellness-dashboard
 import { PayrollCostTrackingPanel } from "@/components/real-time-payroll-cost-tracking/payroll-cost-tracking-panel";
 import { IntelligentDocumentProcessingPanel } from "@/components/intelligent-document-processing/intelligent-document-processing-panel";
 import { GlobalPayrollSupportPanel } from "@/components/global-payroll-support/global-payroll-support-panel";
+import { AdvancedSchedulingEnginePanel } from "@/components/advanced-scheduling-engine/advanced-scheduling-engine-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -201,6 +202,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <IntelligentDocumentProcessingPanel processing={data.intelligentDocumentProcessing} />
 
       <GlobalPayrollSupportPanel support={data.globalPayrollSupport} />
+
+      <AdvancedSchedulingEnginePanel engine={data.advancedSchedulingEngine} />
     </div>
   );
 }

@@ -58,6 +58,11 @@ input {
   font: inherit;
 }
 
+textarea,
+select {
+  font: inherit;
+}
+
 main {
   padding: 24px;
 }
@@ -1030,6 +1035,67 @@ th {
   padding: 10px 14px;
 }
 
+.workspace-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.workspace-form-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workspace-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.workspace-action-grid,
+.workspace-action-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.workspace-action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workspace-action-card,
+.workspace-mini-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.workspace-inline-metadata {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--ink-soft);
+}
+
+.workspace-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+}
+
+.workspace-checkbox input {
+  width: auto;
+}
+
+.workspace-inline-field {
+  gap: 6px;
+  min-width: 180px;
+}
+
 .sentiment-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1205,7 +1271,24 @@ th {
   color: var(--ink);
 }
 
-.field input:focus {
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(23, 33, 43, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+}
+
+.field textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
   outline: 2px solid rgba(242, 111, 76, 0.35);
   border-color: rgba(242, 111, 76, 0.5);
 }
@@ -1276,6 +1359,8 @@ th {
   .workspace-link-grid,
   .workspace-section-grid,
   .workspace-card-grid,
+  .workspace-form-grid,
+  .workspace-action-grid,
   .wellness-metrics-grid,
   .wellness-grid,
   .document-field-grid,

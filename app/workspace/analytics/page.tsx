@@ -1,6 +1,9 @@
 import { OrgChartPanel } from "@/components/dynamic-org-chart-visualization/org-chart-panel";
 import { PredictiveWorkforcePanel } from "@/components/predictive-workforce-analytics/predictive-workforce-panel";
 import { AnalyticsOverviewPanel } from "@/components/reporting/analytics-overview-panel";
+import { PayrollReportPanel } from "@/components/reporting/payroll-report-panel";
+import { PtoReportPanel } from "@/components/reporting/pto-report-panel";
+import { WorkforceReportPanel } from "@/components/reporting/workforce-report-panel";
 import { SentimentAnalysisDashboardPanel } from "@/components/sentiment-analysis-dashboard/sentiment-analysis-dashboard-panel";
 import { WorkspacePageHeader } from "@/components/workspace-shell/workspace-page-header";
 import { WorkspaceSection } from "@/components/workspace-shell/workspace-section";
@@ -12,6 +15,11 @@ const ANALYTICS_SECTIONS = [
     id: "reporting-overview",
     title: "Reporting Overview",
     description: "High-level metrics and reporting readiness.",
+  },
+  {
+    id: "operational-reports",
+    title: "Operational Reports",
+    description: "Payroll, PTO, and workforce reporting routes with frontend controls.",
   },
   {
     id: "predictive-planning",
@@ -50,6 +58,16 @@ export default async function AnalyticsPage() {
           title="Reporting Overview"
         >
           <AnalyticsOverviewPanel />
+        </WorkspaceSection>
+
+        <WorkspaceSection
+          description="Expose the main operational reports directly in the analytics workspace instead of leaving them API-only."
+          id="operational-reports"
+          title="Operational Reports"
+        >
+          <PayrollReportPanel />
+          <PtoReportPanel />
+          <WorkforceReportPanel />
         </WorkspaceSection>
 
         <WorkspaceSection

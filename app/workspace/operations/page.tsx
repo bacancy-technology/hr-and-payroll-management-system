@@ -1,3 +1,4 @@
+import { ApprovalDecisionPanel } from "@/components/approvals/approval-decision-panel";
 import { ApprovalsTablePanel } from "@/components/approvals/approvals-table-panel";
 import { JobPostingPanel } from "@/components/automated-job-posting-integration/job-posting-panel";
 import { BackupRecoveryOverviewPanel } from "@/components/backup-recovery/backup-recovery-overview-panel";
@@ -6,6 +7,7 @@ import { BenefitsPlansTablePanel } from "@/components/benefits/benefits-plans-ta
 import { CustomWorkflowBuilderPanel } from "@/components/custom-workflow-builder/custom-workflow-builder-panel";
 import { DocumentsTablePanel } from "@/components/documents/documents-table-panel";
 import { ExpensesTablePanel } from "@/components/expenses/expenses-table-panel";
+import { IntegrationSyncPanel } from "@/components/integrations/integration-sync-panel";
 import { IntegrationsTablePanel } from "@/components/integrations/integrations-table-panel";
 import { IntelligentDocumentProcessingPanel } from "@/components/intelligent-document-processing/intelligent-document-processing-panel";
 import { BenefitsRecommendationsPanel } from "@/components/smart-benefits-recommendations/benefits-recommendations-panel";
@@ -63,6 +65,7 @@ export default async function OperationsPage() {
         >
           <ExpensesTablePanel />
           <ApprovalsTablePanel />
+          <ApprovalDecisionPanel />
         </WorkspaceSection>
 
         <WorkspaceSection
@@ -91,6 +94,7 @@ export default async function OperationsPage() {
         >
           <JobPostingPanel integration={data.automatedJobPostingIntegration} />
           <IntegrationsTablePanel />
+          <IntegrationSyncPanel />
         </WorkspaceSection>
 
         <WorkspaceSection

@@ -2,6 +2,7 @@ import type {
   Announcement,
   AutomatedComplianceMonitoring,
   BenefitsRecommendation,
+  BlockchainPayrollVerification,
   ComplianceMonitoringSignal,
   CompensationBenchmarkInsight,
   DashboardData,
@@ -318,6 +319,56 @@ export function getDemoVoiceActivatedHrAssistant(): VoiceActivatedHrAssistant {
   };
 }
 
+export function getDemoBlockchainPayrollVerification(): BlockchainPayrollVerification {
+  return {
+    generatedAt: "2026-03-20T09:25:00.000Z",
+    summary: {
+      verifiedRuns: 3,
+      anchoredRuns: 2,
+      immutableRecords: 12,
+      chainLength: 3,
+    },
+    blocks: [
+      {
+        id: "payroll-block-payroll-run-2026-03",
+        payrollRunId: "payroll-run-2026-03",
+        payrollRunLabel: "March 2026",
+        payDate: "2026-03-29",
+        status: "Processing",
+        verificationStatus: "Verified",
+        previousHash: "14983f2c0d...d6a51be220",
+        payloadHash: "5720bc3f5f...ed881f28aa",
+        blockHash: "7ac39502de...4c4cf8f4fe",
+        recordCount: 4,
+      },
+      {
+        id: "payroll-block-payroll-run-2026-02",
+        payrollRunId: "payroll-run-2026-02",
+        payrollRunLabel: "February 2026",
+        payDate: "2026-02-27",
+        status: "Paid",
+        verificationStatus: "Anchored",
+        previousHash: "7b405ec7ab...1035f4b0b1",
+        payloadHash: "14983f2c0d...d6a51be220",
+        blockHash: "5b905fc42f...af83f8de12",
+        recordCount: 4,
+      },
+      {
+        id: "payroll-block-payroll-run-2026-01",
+        payrollRunId: "payroll-run-2026-01",
+        payrollRunLabel: "January 2026",
+        payDate: "2026-01-30",
+        status: "Paid",
+        verificationStatus: "Anchored",
+        previousHash: "GENESIS",
+        payloadHash: "7b405ec7ab...1035f4b0b1",
+        blockHash: "f8ac13d5ac...6504c9e5d2",
+        recordCount: 4,
+      },
+    ],
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -413,6 +464,7 @@ export function getDemoDashboardData(
     smartBenefitsRecommendations: getDemoSmartBenefitsRecommendations(),
     automatedComplianceMonitoring: getDemoAutomatedComplianceMonitoring(),
     voiceActivatedHrAssistant: getDemoVoiceActivatedHrAssistant(),
+    blockchainPayrollVerification: getDemoBlockchainPayrollVerification(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

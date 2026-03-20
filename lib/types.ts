@@ -161,6 +161,30 @@ export interface VoiceActivatedHrAssistant {
   recentResult: VoiceAssistantCommandResult;
 }
 
+export interface PayrollVerificationBlock {
+  id: string;
+  payrollRunId: string;
+  payrollRunLabel: string;
+  payDate: string;
+  status: string;
+  verificationStatus: "Pending" | "Verified" | "Anchored";
+  previousHash: string;
+  payloadHash: string;
+  blockHash: string;
+  recordCount: number;
+}
+
+export interface BlockchainPayrollVerification {
+  generatedAt: string;
+  summary: {
+    verifiedRuns: number;
+    anchoredRuns: number;
+    immutableRecords: number;
+    chainLength: number;
+  };
+  blocks: PayrollVerificationBlock[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -200,6 +224,7 @@ export interface DashboardData {
   smartBenefitsRecommendations: SmartBenefitsRecommendations;
   automatedComplianceMonitoring: AutomatedComplianceMonitoring;
   voiceActivatedHrAssistant: VoiceActivatedHrAssistant;
+  blockchainPayrollVerification: BlockchainPayrollVerification;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

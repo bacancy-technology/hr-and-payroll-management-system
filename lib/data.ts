@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import {
+  getDemoBlockchainPayrollVerification,
   getDemoDashboardData,
   getDemoAutomatedComplianceMonitoring,
   buildSummaryMetrics,
@@ -8,6 +9,7 @@ import {
   getDemoSmartBenefitsRecommendations,
   getDemoVoiceActivatedHrAssistant,
 } from "@/lib/demo-data";
+import { getBlockchainPayrollVerification } from "@/lib/modules/blockchain-payroll-verification/services/blockchain-payroll-verification-service";
 import { getAutomatedComplianceMonitoring } from "@/lib/modules/automated-compliance-monitoring/services/automated-compliance-monitoring-service";
 import { env } from "@/lib/env";
 import { listPayrollAnomalies } from "@/lib/modules/payroll-anomaly-detection/services/payroll-anomaly-detection-service";
@@ -233,6 +235,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const voiceActivatedHrAssistant = organizationId
     ? await getVoiceActivatedHrAssistantPreview(supabase, organizationId, user.id).catch(() => getDemoVoiceActivatedHrAssistant())
     : getDemoVoiceActivatedHrAssistant();
+  const blockchainPayrollVerification = organizationId
+    ? await getBlockchainPayrollVerification(supabase, organizationId).catch(() => getDemoBlockchainPayrollVerification())
+    : getDemoBlockchainPayrollVerification();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -290,6 +295,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     smartBenefitsRecommendations,
     automatedComplianceMonitoring,
     voiceActivatedHrAssistant,
+    blockchainPayrollVerification,
     leaveRequests,
     announcements,
   };

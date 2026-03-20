@@ -5,6 +5,7 @@ import { PredictiveWorkforcePanel } from "@/components/predictive-workforce-anal
 import { BenefitsRecommendationsPanel } from "@/components/smart-benefits-recommendations/benefits-recommendations-panel";
 import { ComplianceMonitoringPanel } from "@/components/automated-compliance-monitoring/compliance-monitoring-panel";
 import { VoiceAssistantPanel } from "@/components/voice-activated-hr-assistant/voice-assistant-panel";
+import { BlockchainPayrollPanel } from "@/components/blockchain-payroll-verification/blockchain-payroll-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -180,6 +181,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <ComplianceMonitoringPanel monitoring={data.automatedComplianceMonitoring} />
 
       <VoiceAssistantPanel assistant={data.voiceActivatedHrAssistant} />
+
+      <BlockchainPayrollPanel verification={data.blockchainPayrollVerification} />
     </div>
   );
 }

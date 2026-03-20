@@ -394,6 +394,36 @@ export interface AdvancedSchedulingEngine {
   alerts: SchedulingConstraintAlert[];
 }
 
+export interface SentimentTheme {
+  id: string;
+  topic: string;
+  sentiment: "Positive" | "Mixed" | "At Risk";
+  signalCount: number;
+  summary: string;
+}
+
+export interface SentimentSignal {
+  id: string;
+  source: string;
+  topic: string;
+  subject: string;
+  sentiment: "Positive" | "Mixed" | "At Risk";
+  excerpt: string;
+  recommendedAction: string;
+}
+
+export interface SentimentAnalysisDashboard {
+  generatedAt: string;
+  summary: {
+    signalsAnalyzed: number;
+    positiveSignals: number;
+    watchSignals: number;
+    atRiskSignals: number;
+  };
+  themes: SentimentTheme[];
+  signals: SentimentSignal[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -441,6 +471,7 @@ export interface DashboardData {
   intelligentDocumentProcessing: IntelligentDocumentProcessing;
   globalPayrollSupport: GlobalPayrollSupport;
   advancedSchedulingEngine: AdvancedSchedulingEngine;
+  sentimentAnalysisDashboard: SentimentAnalysisDashboard;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

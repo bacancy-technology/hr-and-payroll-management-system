@@ -13,10 +13,12 @@ import {
   getDemoIntelligentDocumentProcessing,
   getDemoRealTimePayrollCostTracking,
   getDemoPredictiveWorkforceAnalytics,
+  getDemoSentimentAnalysisDashboard,
   getDemoSmartBenefitsRecommendations,
   getDemoVoiceActivatedHrAssistant,
 } from "@/lib/demo-data";
 import { getAutomatedJobPostingIntegration } from "@/lib/modules/automated-job-posting-integration/services/automated-job-posting-integration-service";
+import { getSentimentAnalysisDashboard } from "@/lib/modules/sentiment-analysis-dashboard/services/sentiment-analysis-dashboard-service";
 import { getEmployeeWellnessDashboard } from "@/lib/modules/employee-wellness-dashboard/services/employee-wellness-dashboard-service";
 import { getGlobalPayrollSupport } from "@/lib/modules/global-payroll-support/services/global-payroll-support-service";
 import { getIntelligentDocumentProcessing } from "@/lib/modules/intelligent-document-processing/services/intelligent-document-processing-service";
@@ -273,6 +275,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const advancedSchedulingEngine = organizationId
     ? await getAdvancedSchedulingEngine(supabase, organizationId).catch(() => getDemoAdvancedSchedulingEngine())
     : getDemoAdvancedSchedulingEngine();
+  const sentimentAnalysisDashboard = organizationId
+    ? await getSentimentAnalysisDashboard(supabase, organizationId).catch(() => getDemoSentimentAnalysisDashboard())
+    : getDemoSentimentAnalysisDashboard();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -338,6 +343,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     intelligentDocumentProcessing,
     globalPayrollSupport,
     advancedSchedulingEngine,
+    sentimentAnalysisDashboard,
     leaveRequests,
     announcements,
   };

@@ -13,6 +13,7 @@ import { PayrollCostTrackingPanel } from "@/components/real-time-payroll-cost-tr
 import { IntelligentDocumentProcessingPanel } from "@/components/intelligent-document-processing/intelligent-document-processing-panel";
 import { GlobalPayrollSupportPanel } from "@/components/global-payroll-support/global-payroll-support-panel";
 import { AdvancedSchedulingEnginePanel } from "@/components/advanced-scheduling-engine/advanced-scheduling-engine-panel";
+import { SentimentAnalysisDashboardPanel } from "@/components/sentiment-analysis-dashboard/sentiment-analysis-dashboard-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -204,6 +205,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <GlobalPayrollSupportPanel support={data.globalPayrollSupport} />
 
       <AdvancedSchedulingEnginePanel engine={data.advancedSchedulingEngine} />
+
+      <SentimentAnalysisDashboardPanel dashboard={data.sentimentAnalysisDashboard} />
     </div>
   );
 }

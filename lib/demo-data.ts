@@ -20,6 +20,7 @@ import type {
   PayrollRun,
   PredictiveTurnoverRisk,
   PredictiveWorkforceAnalytics,
+  SentimentAnalysisDashboard,
   SmartBenefitsRecommendations,
   SummaryMetric,
   UserProfile,
@@ -898,6 +899,97 @@ export function getDemoAdvancedSchedulingEngine(): AdvancedSchedulingEngine {
   };
 }
 
+export function getDemoSentimentAnalysisDashboard(): SentimentAnalysisDashboard {
+  return {
+    generatedAt: "2026-03-20T11:15:00.000Z",
+    summary: {
+      signalsAnalyzed: 6,
+      positiveSignals: 4,
+      watchSignals: 2,
+      atRiskSignals: 0,
+    },
+    themes: [
+      {
+        id: "sentiment-theme-performance",
+        topic: "Performance",
+        sentiment: "Positive",
+        signalCount: 2,
+        summary: "Recent review narratives are constructive, with strong delivery language outweighing calibration friction.",
+      },
+      {
+        id: "sentiment-theme-payroll",
+        topic: "Payroll",
+        sentiment: "Positive",
+        signalCount: 1,
+        summary: "Operational messaging points to fewer manual exceptions and smoother payroll execution.",
+      },
+      {
+        id: "sentiment-theme-approvals",
+        topic: "Approvals",
+        sentiment: "Mixed",
+        signalCount: 2,
+        summary: "Most approval flows are moving, but a small set remains in review and needs follow-through.",
+      },
+    ],
+    signals: [
+      {
+        id: "sentiment-review-jordan",
+        source: "Performance Review",
+        topic: "Performance",
+        subject: "Jordan Blake",
+        sentiment: "Positive",
+        excerpt: "Strong delivery against platform reliability goals with clear ownership on backend modernization.",
+        recommendedAction: "Reinforce momentum with concrete growth feedback during the final calibration round.",
+      },
+      {
+        id: "sentiment-review-elena",
+        source: "Performance Review",
+        topic: "Performance",
+        subject: "Elena Torres",
+        sentiment: "Mixed",
+        excerpt: "New hiring funnel experiments are showing better recruiter response rates, but manager drafting is still in progress.",
+        recommendedAction: "Close the draft review quickly so positive hiring signals are translated into clear next steps.",
+      },
+      {
+        id: "sentiment-announcement-payroll",
+        source: "Announcement",
+        topic: "Payroll",
+        subject: "Payroll exception rate dropped below 1%",
+        sentiment: "Positive",
+        excerpt: "Automated checks on reimbursements and bonuses are clearing with fewer manual interventions.",
+        recommendedAction: "Share the improvement with managers and keep the current controls in place.",
+      },
+      {
+        id: "sentiment-announcement-onboarding",
+        source: "Announcement",
+        topic: "People Ops",
+        subject: "Hybrid onboarding playbook was refreshed",
+        sentiment: "Positive",
+        excerpt: "The new checklist shortens time-to-setup for global hires and syncs with IT handoffs.",
+        recommendedAction: "Promote the updated playbook broadly so teams keep using the improved process.",
+      },
+      {
+        id: "sentiment-approval-leave",
+        source: "Approval",
+        topic: "Approvals",
+        subject: "Leave approval queue",
+        sentiment: "Mixed",
+        excerpt: "A small number of leave and expense approvals are still in review rather than fully cleared.",
+        recommendedAction: "Triage aging approvals before they start affecting employee confidence in response times.",
+      },
+      {
+        id: "sentiment-announcement-reviews",
+        source: "Announcement",
+        topic: "Performance",
+        subject: "Q2 compensation review window opens next Monday",
+        sentiment: "Positive",
+        excerpt: "Managers can finalize performance inputs directly in the workspace before April 8.",
+        recommendedAction: "Keep managers on schedule so the review window feels organized rather than last-minute.",
+      },
+    ],
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -1001,6 +1093,7 @@ export function getDemoDashboardData(
     intelligentDocumentProcessing: getDemoIntelligentDocumentProcessing(),
     globalPayrollSupport: getDemoGlobalPayrollSupport(),
     advancedSchedulingEngine: getDemoAdvancedSchedulingEngine(),
+    sentimentAnalysisDashboard: getDemoSentimentAnalysisDashboard(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

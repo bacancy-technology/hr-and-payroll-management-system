@@ -876,6 +876,46 @@ th {
   background: rgba(201, 104, 85, 0.16);
 }
 
+.sentiment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sentiment-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.sentiment-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.sentiment-status-positive {
+  color: var(--accent);
+  background: rgba(13, 122, 115, 0.12);
+}
+
+.sentiment-status-mixed {
+  color: #8b5f16;
+  background: rgba(207, 170, 64, 0.18);
+}
+
+.sentiment-status-at-risk {
+  color: #8d3325;
+  background: rgba(201, 104, 85, 0.16);
+}
+
 .notice {
   display: flex;
   align-items: flex-start;
@@ -1039,6 +1079,7 @@ th {
   .global-payroll-grid,
   .global-currency-grid,
   .scheduling-grid,
+  .sentiment-grid,
   .loading-grid {
     grid-template-columns: 1fr;
   }

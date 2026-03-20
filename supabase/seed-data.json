@@ -34,6 +34,46 @@
       "primaryContactEmail": "priya.nair@pulsehr.app"
     }
   ],
+  "backupJobs": [
+    {
+      "seedKey": "backup-full-2026-03-18",
+      "backupType": "Full",
+      "status": "Completed",
+      "startedAt": "2026-03-18T02:00:00Z",
+      "completedAt": "2026-03-18T02:14:00Z",
+      "retentionUntil": "2026-04-17T02:14:00Z",
+      "storagePath": "backups/2026/03/18/full-0200.snapshot",
+      "snapshotSizeMb": 842.4,
+      "triggeredByName": "System Scheduler",
+      "summary": "Nightly full backup for workforce, payroll, and compliance records."
+    },
+    {
+      "seedKey": "backup-incremental-2026-03-19",
+      "backupType": "Incremental",
+      "status": "Completed",
+      "startedAt": "2026-03-19T02:00:00Z",
+      "completedAt": "2026-03-19T02:05:00Z",
+      "retentionUntil": "2026-04-03T02:05:00Z",
+      "storagePath": "backups/2026/03/19/incremental-0200.snapshot",
+      "snapshotSizeMb": 126.9,
+      "triggeredByName": "System Scheduler",
+      "summary": "Captured payroll deltas, approvals, and document metadata changes."
+    }
+  ],
+  "recoveryEvents": [
+    {
+      "seedKey": "recovery-documents-2026-03-12",
+      "backupSeedKey": "backup-full-2026-03-18",
+      "recoveryType": "Point-in-time",
+      "status": "Completed",
+      "startedAt": "2026-03-12T09:10:00Z",
+      "completedAt": "2026-03-12T09:18:00Z",
+      "targetScope": "Documents",
+      "requestedByName": "Anika Raman",
+      "approvedByName": "Priya Nair",
+      "summary": "Recovered three policy documents after an accidental archival action."
+    }
+  ],
   "departments": [
     {
       "seedKey": "department-people",

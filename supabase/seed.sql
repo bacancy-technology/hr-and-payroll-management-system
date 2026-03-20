@@ -71,6 +71,97 @@ set
   primary_contact_name = excluded.primary_contact_name,
   primary_contact_email = excluded.primary_contact_email;
 
+insert into public.backup_jobs (
+  organization_id,
+  seed_key,
+  backup_type,
+  status,
+  started_at,
+  completed_at,
+  retention_until,
+  storage_path,
+  snapshot_size_mb,
+  triggered_by_name,
+  summary
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'backup-full-2026-03-18',
+    'Full',
+    'Completed',
+    '2026-03-18T02:00:00Z',
+    '2026-03-18T02:14:00Z',
+    '2026-04-17T02:14:00Z',
+    'backups/2026/03/18/full-0200.snapshot',
+    842.4,
+    'System Scheduler',
+    'Nightly full backup for workforce, payroll, and compliance records.'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'backup-incremental-2026-03-19',
+    'Incremental',
+    'Completed',
+    '2026-03-19T02:00:00Z',
+    '2026-03-19T02:05:00Z',
+    '2026-04-03T02:05:00Z',
+    'backups/2026/03/19/incremental-0200.snapshot',
+    126.9,
+    'System Scheduler',
+    'Captured payroll deltas, approvals, and document metadata changes.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  backup_type = excluded.backup_type,
+  status = excluded.status,
+  started_at = excluded.started_at,
+  completed_at = excluded.completed_at,
+  retention_until = excluded.retention_until,
+  storage_path = excluded.storage_path,
+  snapshot_size_mb = excluded.snapshot_size_mb,
+  triggered_by_name = excluded.triggered_by_name,
+  summary = excluded.summary;
+
+insert into public.recovery_events (
+  organization_id,
+  seed_key,
+  backup_job_id,
+  recovery_type,
+  status,
+  started_at,
+  completed_at,
+  target_scope,
+  requested_by_name,
+  approved_by_name,
+  summary
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'recovery-documents-2026-03-12',
+    (select id from public.backup_jobs where organization_id = '11111111-1111-1111-1111-111111111111' and seed_key = 'backup-full-2026-03-18'),
+    'Point-in-time',
+    'Completed',
+    '2026-03-12T09:10:00Z',
+    '2026-03-12T09:18:00Z',
+    'Documents',
+    'Anika Raman',
+    'Priya Nair',
+    'Recovered three policy documents after an accidental archival action.'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  backup_job_id = excluded.backup_job_id,
+  recovery_type = excluded.recovery_type,
+  status = excluded.status,
+  started_at = excluded.started_at,
+  completed_at = excluded.completed_at,
+  target_scope = excluded.target_scope,
+  requested_by_name = excluded.requested_by_name,
+  approved_by_name = excluded.approved_by_name,
+  summary = excluded.summary;
+
 insert into public.departments (
   organization_id,
   seed_key,

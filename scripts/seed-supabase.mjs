@@ -101,6 +101,20 @@ async function main() {
     primary_contact_name: entity.primaryContactName ?? null,
     primary_contact_email: entity.primaryContactEmail ?? null,
   }));
+  const backupJobs = (seedData.backupJobs ?? []).map((backupJob) => ({
+    organization_id: organizationId,
+    seed_key: backupJob.seedKey,
+    backup_type: backupJob.backupType,
+    status: backupJob.status,
+    started_at: backupJob.startedAt ?? null,
+    completed_at: backupJob.completedAt ?? null,
+    retention_until: backupJob.retentionUntil ?? null,
+    storage_path: backupJob.storagePath,
+    snapshot_size_mb: backupJob.snapshotSizeMb ?? 0,
+    triggered_by_name: backupJob.triggeredByName,
+    summary: backupJob.summary ?? null,
+  }));
+  const recoveryEventsSeed = seedData.recoveryEvents ?? [];
 
   const departments = seedData.departments.map((department) => ({
     organization_id: organizationId,
@@ -394,9 +408,12 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: companyEntitiesError }, { error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: complianceRulesError }, { error: taxFilingsError }, { error: workersCompPoliciesError }, { error: integrationsError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
+  const [{ error: companyEntitiesError }, { error: backupJobsError }, { error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: complianceRulesError }, { error: taxFilingsError }, { error: workersCompPoliciesError }, { error: integrationsError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
     await Promise.all([
       supabase.from("company_entities").upsert(companyEntities, {
+        onConflict: "organization_id,seed_key",
+      }),
+      supabase.from("backup_jobs").upsert(backupJobs, {
         onConflict: "organization_id,seed_key",
       }),
       supabase.from("employees").upsert(employees, {
@@ -445,6 +462,10 @@ async function main() {
 
   if (companyEntitiesError) {
     throw new Error(`Failed to seed company entities: ${companyEntitiesError.message}`);
+  }
+
+  if (backupJobsError) {
+    throw new Error(`Failed to seed backup jobs: ${backupJobsError.message}`);
   }
 
   if (employeesError) {
@@ -553,6 +574,17 @@ async function main() {
   }
 
   const integrationIdBySeedKey = new Map(integrationRows.map((integration) => [integration.seed_key, integration.id]));
+
+  const { data: backupJobRows, error: backupJobRowsError } = await supabase
+    .from("backup_jobs")
+    .select("id, seed_key")
+    .eq("organization_id", organizationId);
+
+  if (backupJobRowsError) {
+    throw new Error(`Failed to load backup jobs after seeding: ${backupJobRowsError.message}`);
+  }
+
+  const backupJobIdBySeedKey = new Map(backupJobRows.map((backupJob) => [backupJob.seed_key, backupJob.id]));
 
   const bankAccounts = bankAccountsSeed.map((account) => ({
     organization_id: organizationId,
@@ -960,6 +992,28 @@ async function main() {
     throw new Error(`Failed to seed documents: ${documentsError.message}`);
   }
 
+  const recoveryEvents = recoveryEventsSeed.map((event) => ({
+    organization_id: organizationId,
+    seed_key: event.seedKey,
+    backup_job_id: event.backupSeedKey ? (backupJobIdBySeedKey.get(event.backupSeedKey) ?? null) : null,
+    recovery_type: event.recoveryType,
+    status: event.status,
+    started_at: event.startedAt ?? null,
+    completed_at: event.completedAt ?? null,
+    target_scope: event.targetScope,
+    requested_by_name: event.requestedByName,
+    approved_by_name: event.approvedByName ?? null,
+    summary: event.summary ?? null,
+  }));
+
+  const { error: recoveryEventsError } = await supabase.from("recovery_events").upsert(recoveryEvents, {
+    onConflict: "organization_id,seed_key",
+  });
+
+  if (recoveryEventsError) {
+    throw new Error(`Failed to seed recovery events: ${recoveryEventsError.message}`);
+  }
+
   const onboardingTasks = onboardingTasksSeed.map((task) => ({
     organization_id: organizationId,
     seed_key: task.seedKey,
@@ -983,6 +1037,8 @@ async function main() {
 
   console.log(`Seeded organization ${organizationId}`);
   console.log(`Company entities: ${companyEntities.length}`);
+  console.log(`Backup jobs: ${backupJobs.length}`);
+  console.log(`Recovery events: ${recoveryEvents.length}`);
   console.log(`Departments: ${departments.length}`);
   console.log(`Access roles: ${accessRoles.length}`);
   console.log(`Role assignments: ${roleAssignments.length}`);

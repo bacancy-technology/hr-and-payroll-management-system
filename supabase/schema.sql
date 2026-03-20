@@ -35,6 +35,38 @@ create table if not exists public.company_entities (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.backup_jobs (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  backup_type text not null default 'Full',
+  status text not null default 'Completed',
+  started_at timestamptz,
+  completed_at timestamptz,
+  retention_until timestamptz,
+  storage_path text not null,
+  snapshot_size_mb numeric(12, 2) not null default 0 check (snapshot_size_mb >= 0),
+  triggered_by_name text not null,
+  summary text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.recovery_events (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  backup_job_id uuid references public.backup_jobs (id) on delete set null,
+  recovery_type text not null default 'Point-in-time',
+  status text not null default 'Completed',
+  started_at timestamptz,
+  completed_at timestamptz,
+  target_scope text not null,
+  requested_by_name text not null,
+  approved_by_name text,
+  summary text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.departments (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -865,8 +897,54 @@ alter table public.company_entities alter column status set not null;
 alter table public.company_entities add column if not exists primary_contact_name text;
 alter table public.company_entities add column if not exists primary_contact_email text;
 
+alter table public.backup_jobs add column if not exists seed_key text;
+update public.backup_jobs set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.backup_jobs alter column seed_key set default gen_random_uuid()::text;
+alter table public.backup_jobs alter column seed_key set not null;
+alter table public.backup_jobs add column if not exists backup_type text;
+update public.backup_jobs set backup_type = 'Full' where backup_type is null;
+alter table public.backup_jobs alter column backup_type set default 'Full';
+alter table public.backup_jobs alter column backup_type set not null;
+alter table public.backup_jobs add column if not exists started_at timestamptz;
+alter table public.backup_jobs add column if not exists completed_at timestamptz;
+alter table public.backup_jobs add column if not exists retention_until timestamptz;
+alter table public.backup_jobs add column if not exists storage_path text;
+update public.backup_jobs set storage_path = 'backups/unknown' where storage_path is null;
+alter table public.backup_jobs alter column storage_path set not null;
+alter table public.backup_jobs add column if not exists snapshot_size_mb numeric(12, 2);
+update public.backup_jobs set snapshot_size_mb = 0 where snapshot_size_mb is null;
+alter table public.backup_jobs alter column snapshot_size_mb set default 0;
+alter table public.backup_jobs alter column snapshot_size_mb set not null;
+alter table public.backup_jobs add column if not exists triggered_by_name text;
+update public.backup_jobs set triggered_by_name = 'System' where triggered_by_name is null;
+alter table public.backup_jobs alter column triggered_by_name set not null;
+alter table public.backup_jobs add column if not exists summary text;
+
+alter table public.recovery_events add column if not exists seed_key text;
+update public.recovery_events set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.recovery_events alter column seed_key set default gen_random_uuid()::text;
+alter table public.recovery_events alter column seed_key set not null;
+alter table public.recovery_events add column if not exists backup_job_id uuid references public.backup_jobs (id) on delete set null;
+alter table public.recovery_events add column if not exists recovery_type text;
+update public.recovery_events set recovery_type = 'Point-in-time' where recovery_type is null;
+alter table public.recovery_events alter column recovery_type set default 'Point-in-time';
+alter table public.recovery_events alter column recovery_type set not null;
+alter table public.recovery_events add column if not exists started_at timestamptz;
+alter table public.recovery_events add column if not exists completed_at timestamptz;
+alter table public.recovery_events add column if not exists target_scope text;
+update public.recovery_events set target_scope = 'Organization' where target_scope is null;
+alter table public.recovery_events alter column target_scope set not null;
+alter table public.recovery_events add column if not exists requested_by_name text;
+update public.recovery_events set requested_by_name = 'System' where requested_by_name is null;
+alter table public.recovery_events alter column requested_by_name set not null;
+alter table public.recovery_events add column if not exists approved_by_name text;
+alter table public.recovery_events add column if not exists summary text;
+
 create index if not exists departments_organization_id_idx on public.departments (organization_id);
 create index if not exists company_entities_organization_id_idx on public.company_entities (organization_id);
+create index if not exists backup_jobs_organization_id_idx on public.backup_jobs (organization_id);
+create index if not exists recovery_events_organization_id_idx on public.recovery_events (organization_id);
+create index if not exists recovery_events_backup_job_id_idx on public.recovery_events (backup_job_id);
 create index if not exists access_roles_organization_id_idx on public.access_roles (organization_id);
 create index if not exists role_assignments_organization_id_idx on public.role_assignments (organization_id);
 create index if not exists role_assignments_role_id_idx on public.role_assignments (role_id);
@@ -925,6 +1003,10 @@ create unique index if not exists company_entities_organization_seed_key_idx
   on public.company_entities (organization_id, seed_key);
 create unique index if not exists company_entities_organization_name_idx
   on public.company_entities (organization_id, name);
+create unique index if not exists backup_jobs_organization_seed_key_idx
+  on public.backup_jobs (organization_id, seed_key);
+create unique index if not exists recovery_events_organization_seed_key_idx
+  on public.recovery_events (organization_id, seed_key);
 create unique index if not exists access_roles_organization_seed_key_idx
   on public.access_roles (organization_id, seed_key);
 create unique index if not exists access_roles_organization_name_idx
@@ -1013,6 +1095,8 @@ $$;
 
 alter table public.profiles enable row level security;
 alter table public.company_entities enable row level security;
+alter table public.backup_jobs enable row level security;
+alter table public.recovery_events enable row level security;
 alter table public.departments enable row level security;
 alter table public.access_roles enable row level security;
 alter table public.role_assignments enable row level security;
@@ -1100,6 +1184,64 @@ with check (organization_id = public.current_user_organization_id());
 drop policy if exists "users can delete company entities in their organization" on public.company_entities;
 create policy "users can delete company entities in their organization"
 on public.company_entities
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read backup jobs in their organization" on public.backup_jobs;
+create policy "users can read backup jobs in their organization"
+on public.backup_jobs
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert backup jobs in their organization" on public.backup_jobs;
+create policy "users can insert backup jobs in their organization"
+on public.backup_jobs
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update backup jobs in their organization" on public.backup_jobs;
+create policy "users can update backup jobs in their organization"
+on public.backup_jobs
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete backup jobs in their organization" on public.backup_jobs;
+create policy "users can delete backup jobs in their organization"
+on public.backup_jobs
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can read recovery events in their organization" on public.recovery_events;
+create policy "users can read recovery events in their organization"
+on public.recovery_events
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert recovery events in their organization" on public.recovery_events;
+create policy "users can insert recovery events in their organization"
+on public.recovery_events
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update recovery events in their organization" on public.recovery_events;
+create policy "users can update recovery events in their organization"
+on public.recovery_events
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete recovery events in their organization" on public.recovery_events;
+create policy "users can delete recovery events in their organization"
+on public.recovery_events
 for delete
 to authenticated
 using (organization_id = public.current_user_organization_id());

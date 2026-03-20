@@ -6,6 +6,7 @@ import type {
   ComplianceMonitoringSignal,
   CompensationBenchmarkInsight,
   DashboardData,
+  DynamicOrgChartVisualization,
   Employee,
   HiringWindowRecommendation,
   LeaveRequest,
@@ -369,6 +370,88 @@ export function getDemoBlockchainPayrollVerification(): BlockchainPayrollVerific
   };
 }
 
+export function getDemoDynamicOrgChartVisualization(): DynamicOrgChartVisualization {
+  return {
+    generatedAt: "2026-03-20T09:35:00.000Z",
+    summary: {
+      people: 6,
+      rootLeaders: 1,
+      reportingLinks: 5,
+      departments: 4,
+    },
+    nodes: [
+      {
+        id: "emp_001",
+        fullName: "Anika Raman",
+        role: "VP, People Operations",
+        departmentName: "People",
+        managerName: "Executive Team",
+        level: 0,
+        directReportCount: 2,
+      },
+      {
+        id: "emp_005",
+        fullName: "Elena Torres",
+        role: "Talent Partner",
+        departmentName: "People",
+        managerName: "Anika Raman",
+        level: 1,
+        directReportCount: 0,
+      },
+      {
+        id: "emp_003",
+        fullName: "Priya Nair",
+        role: "Payroll Specialist",
+        departmentName: "Finance",
+        managerName: "Anika Raman",
+        level: 1,
+        directReportCount: 1,
+      },
+      {
+        id: "emp_006",
+        fullName: "Noah Kim",
+        role: "Finance Analyst",
+        departmentName: "Finance",
+        managerName: "Priya Nair",
+        level: 2,
+        directReportCount: 0,
+      },
+      {
+        id: "emp_002",
+        fullName: "Jordan Blake",
+        role: "Senior Backend Engineer",
+        departmentName: "Engineering",
+        managerName: "Mina Carter",
+        level: 0,
+        directReportCount: 0,
+      },
+      {
+        id: "emp_004",
+        fullName: "Marcus Lee",
+        role: "Product Designer",
+        departmentName: "Design",
+        managerName: "Daniel Moss",
+        level: 0,
+        directReportCount: 0,
+      },
+    ],
+    links: [
+      {
+        sourceEmployeeId: "emp_001",
+        targetEmployeeId: "emp_005",
+      },
+      {
+        sourceEmployeeId: "emp_001",
+        targetEmployeeId: "emp_003",
+      },
+      {
+        sourceEmployeeId: "emp_003",
+        targetEmployeeId: "emp_006",
+      },
+    ],
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -465,6 +548,7 @@ export function getDemoDashboardData(
     automatedComplianceMonitoring: getDemoAutomatedComplianceMonitoring(),
     voiceActivatedHrAssistant: getDemoVoiceActivatedHrAssistant(),
     blockchainPayrollVerification: getDemoBlockchainPayrollVerification(),
+    dynamicOrgChartVisualization: getDemoDynamicOrgChartVisualization(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

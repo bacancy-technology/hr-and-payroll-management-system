@@ -5,11 +5,13 @@ import {
   getDemoDashboardData,
   getDemoAutomatedComplianceMonitoring,
   buildSummaryMetrics,
+  getDemoDynamicOrgChartVisualization,
   getDemoPredictiveWorkforceAnalytics,
   getDemoSmartBenefitsRecommendations,
   getDemoVoiceActivatedHrAssistant,
 } from "@/lib/demo-data";
 import { getBlockchainPayrollVerification } from "@/lib/modules/blockchain-payroll-verification/services/blockchain-payroll-verification-service";
+import { getDynamicOrgChartVisualization } from "@/lib/modules/dynamic-org-chart-visualization/services/dynamic-org-chart-visualization-service";
 import { getAutomatedComplianceMonitoring } from "@/lib/modules/automated-compliance-monitoring/services/automated-compliance-monitoring-service";
 import { env } from "@/lib/env";
 import { listPayrollAnomalies } from "@/lib/modules/payroll-anomaly-detection/services/payroll-anomaly-detection-service";
@@ -238,6 +240,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const blockchainPayrollVerification = organizationId
     ? await getBlockchainPayrollVerification(supabase, organizationId).catch(() => getDemoBlockchainPayrollVerification())
     : getDemoBlockchainPayrollVerification();
+  const dynamicOrgChartVisualization = organizationId
+    ? await getDynamicOrgChartVisualization(supabase, organizationId).catch(() => getDemoDynamicOrgChartVisualization())
+    : getDemoDynamicOrgChartVisualization();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -296,6 +301,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     automatedComplianceMonitoring,
     voiceActivatedHrAssistant,
     blockchainPayrollVerification,
+    dynamicOrgChartVisualization,
     leaveRequests,
     announcements,
   };

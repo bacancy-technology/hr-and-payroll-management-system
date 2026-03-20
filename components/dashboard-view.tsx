@@ -6,6 +6,7 @@ import { BenefitsRecommendationsPanel } from "@/components/smart-benefits-recomm
 import { ComplianceMonitoringPanel } from "@/components/automated-compliance-monitoring/compliance-monitoring-panel";
 import { VoiceAssistantPanel } from "@/components/voice-activated-hr-assistant/voice-assistant-panel";
 import { BlockchainPayrollPanel } from "@/components/blockchain-payroll-verification/blockchain-payroll-panel";
+import { OrgChartPanel } from "@/components/dynamic-org-chart-visualization/org-chart-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -183,6 +184,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <VoiceAssistantPanel assistant={data.voiceActivatedHrAssistant} />
 
       <BlockchainPayrollPanel verification={data.blockchainPayrollVerification} />
+
+      <OrgChartPanel orgChart={data.dynamicOrgChartVisualization} />
     </div>
   );
 }

@@ -185,6 +185,33 @@ export interface BlockchainPayrollVerification {
   blocks: PayrollVerificationBlock[];
 }
 
+export interface OrgChartNode {
+  id: string;
+  fullName: string;
+  role: string;
+  departmentName: string;
+  managerName: string;
+  level: number;
+  directReportCount: number;
+}
+
+export interface OrgChartLink {
+  sourceEmployeeId: string;
+  targetEmployeeId: string;
+}
+
+export interface DynamicOrgChartVisualization {
+  generatedAt: string;
+  summary: {
+    people: number;
+    rootLeaders: number;
+    reportingLinks: number;
+    departments: number;
+  };
+  nodes: OrgChartNode[];
+  links: OrgChartLink[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -225,6 +252,7 @@ export interface DashboardData {
   automatedComplianceMonitoring: AutomatedComplianceMonitoring;
   voiceActivatedHrAssistant: VoiceActivatedHrAssistant;
   blockchainPayrollVerification: BlockchainPayrollVerification;
+  dynamicOrgChartVisualization: DynamicOrgChartVisualization;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

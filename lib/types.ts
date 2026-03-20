@@ -51,6 +51,45 @@ export interface PayrollAnomaly {
   metrics: PayrollAnomalyMetric[];
 }
 
+export interface PredictiveTurnoverRisk {
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  riskLevel: "Watch" | "Elevated" | "Critical";
+  riskScore: number;
+  drivers: string[];
+}
+
+export interface HiringWindowRecommendation {
+  id: string;
+  department: string;
+  recommendedWindow: string;
+  confidenceScore: number;
+  rationale: string;
+}
+
+export interface CompensationBenchmarkInsight {
+  id: string;
+  department: string;
+  averageSalary: number;
+  benchmarkSalary: number;
+  gapPercent: number;
+  position: "Below" | "Aligned" | "Above";
+}
+
+export interface PredictiveWorkforceAnalytics {
+  generatedAt: string;
+  summary: {
+    monitoredEmployees: number;
+    highRiskEmployees: number;
+    recommendedHiringWindows: number;
+    departmentsBelowBenchmark: number;
+  };
+  turnoverRisk: PredictiveTurnoverRisk[];
+  hiringWindows: HiringWindowRecommendation[];
+  compensationBenchmarks: CompensationBenchmarkInsight[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -86,6 +125,7 @@ export interface DashboardData {
   employees: Employee[];
   payrollRuns: PayrollRun[];
   payrollAnomalies: PayrollAnomaly[];
+  predictiveWorkforceAnalytics: PredictiveWorkforceAnalytics;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

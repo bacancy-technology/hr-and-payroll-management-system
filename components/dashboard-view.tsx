@@ -1,6 +1,7 @@
 import type { DashboardData } from "@/lib/types";
 import { formatCurrency, formatDate, toStatusClass } from "@/lib/utils";
 import { PayrollAnomalyPanel } from "@/components/payroll-anomaly-detection/payroll-anomaly-panel";
+import { PredictiveWorkforcePanel } from "@/components/predictive-workforce-analytics/predictive-workforce-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -168,6 +169,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
           </table>
         </div>
       </section>
+
+      <PredictiveWorkforcePanel analytics={data.predictiveWorkforceAnalytics} />
     </div>
   );
 }

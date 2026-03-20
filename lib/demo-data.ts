@@ -1,10 +1,14 @@
 import type {
   Announcement,
+  CompensationBenchmarkInsight,
   DashboardData,
   Employee,
+  HiringWindowRecommendation,
   LeaveRequest,
   PayrollAnomaly,
   PayrollRun,
+  PredictiveTurnoverRisk,
+  PredictiveWorkforceAnalytics,
   SummaryMetric,
   UserProfile,
 } from "@/lib/types";
@@ -78,6 +82,99 @@ const demoPayrollAnomalies: PayrollAnomaly[] = [
     ],
   },
 ];
+
+const demoTurnoverRisk: PredictiveTurnoverRisk[] = [
+  {
+    employeeId: "emp_006",
+    employeeName: "Noah Kim",
+    department: "Finance",
+    riskLevel: "Critical",
+    riskScore: 84,
+    drivers: [
+      "Employee is already flagged as in review.",
+      "Employee is within the first year of tenure.",
+      "Performance review or compensation conversation is imminent.",
+    ],
+  },
+  {
+    employeeId: "emp_005",
+    employeeName: "Elena Torres",
+    department: "People",
+    riskLevel: "Elevated",
+    riskScore: 69,
+    drivers: [
+      "Employee is still in the early-tenure retention window.",
+      "Upcoming review cycle could influence retention.",
+      "Compensation sits below the department midpoint.",
+    ],
+  },
+];
+
+const demoHiringWindows: HiringWindowRecommendation[] = [
+  {
+    id: "hiring-window-people",
+    department: "People",
+    recommendedWindow: "Next 45 days",
+    confidenceScore: 0.79,
+    rationale: "2 employees, 7 leave days in the next 45 days, and 2 review cycles due soon.",
+  },
+  {
+    id: "hiring-window-finance",
+    department: "Finance",
+    recommendedWindow: "Next 30 days",
+    confidenceScore: 0.86,
+    rationale: "2 employees, 2 leave days in the next 45 days, and 1 review cycle due soon.",
+  },
+  {
+    id: "hiring-window-design",
+    department: "Design",
+    recommendedWindow: "Next quarter",
+    confidenceScore: 0.62,
+    rationale: "1 employee, 6 leave days in the next 45 days, and 0 review cycles due soon.",
+  },
+];
+
+const demoCompensationBenchmarks: CompensationBenchmarkInsight[] = [
+  {
+    id: "benchmark-engineering",
+    department: "Engineering",
+    averageSalary: 132000,
+    benchmarkSalary: 142560,
+    gapPercent: -7.41,
+    position: "Below",
+  },
+  {
+    id: "benchmark-finance",
+    department: "Finance",
+    averageSalary: 92000,
+    benchmarkSalary: 94760,
+    gapPercent: -2.91,
+    position: "Aligned",
+  },
+  {
+    id: "benchmark-people",
+    department: "People",
+    averageSalary: 120000,
+    benchmarkSalary: 122400,
+    gapPercent: -1.96,
+    position: "Aligned",
+  },
+];
+
+export function getDemoPredictiveWorkforceAnalytics(): PredictiveWorkforceAnalytics {
+  return {
+    generatedAt: "2026-03-20T08:30:00.000Z",
+    summary: {
+      monitoredEmployees: demoEmployees.length,
+      highRiskEmployees: demoTurnoverRisk.filter((employee) => employee.riskLevel === "Critical").length,
+      recommendedHiringWindows: demoHiringWindows.filter((window) => window.recommendedWindow !== "Next quarter").length,
+      departmentsBelowBenchmark: demoCompensationBenchmarks.filter((item) => item.position === "Below").length,
+    },
+    turnoverRisk: demoTurnoverRisk.map((employee) => ({ ...employee, drivers: [...employee.drivers] })),
+    hiringWindows: demoHiringWindows.map((window) => ({ ...window })),
+    compensationBenchmarks: demoCompensationBenchmarks.map((benchmark) => ({ ...benchmark })),
+  };
+}
 
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
@@ -170,6 +267,7 @@ export function getDemoDashboardData(
       ...anomaly,
       metrics: anomaly.metrics.map((metric) => ({ ...metric })),
     })),
+    predictiveWorkforceAnalytics: getDemoPredictiveWorkforceAnalytics(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { getDemoDashboardData, buildSummaryMetrics } from "@/lib/demo-data";
+import { getDemoDashboardData, buildSummaryMetrics, getDemoPredictiveWorkforceAnalytics } from "@/lib/demo-data";
 import { env } from "@/lib/env";
 import { listPayrollAnomalies } from "@/lib/modules/payroll-anomaly-detection/services/payroll-anomaly-detection-service";
+import { getPredictiveWorkforceAnalytics } from "@/lib/modules/predictive-workforce-analytics/services/predictive-workforce-analytics-service";
 import { createServerClient } from "@/lib/supabase/server";
 import type { DashboardData, Employee, LeaveRequest, PayrollRun, UserProfile } from "@/lib/types";
 import { initialsFromName } from "@/lib/utils";
@@ -210,6 +211,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     : { data: null, error: null };
 
   const payrollAnomalies = organizationId ? await listPayrollAnomalies(supabase, organizationId, 3).catch(() => []) : [];
+  const predictiveWorkforceAnalytics = organizationId
+    ? await getPredictiveWorkforceAnalytics(supabase, organizationId).catch(() => getDemoPredictiveWorkforceAnalytics())
+    : getDemoPredictiveWorkforceAnalytics();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -263,6 +267,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     employees,
     payrollRuns,
     payrollAnomalies,
+    predictiveWorkforceAnalytics,
     leaveRequests,
     announcements,
   };

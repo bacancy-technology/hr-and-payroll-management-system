@@ -916,6 +916,52 @@ th {
   background: rgba(201, 104, 85, 0.16);
 }
 
+.workflow-builder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.workflow-builder-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.workflow-builder-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.workflow-builder-active,
+.workflow-builder-ready,
+.workflow-builder-automated {
+  color: var(--accent);
+  background: rgba(13, 122, 115, 0.12);
+}
+
+.workflow-builder-draft,
+.workflow-builder-watch,
+.workflow-builder-assisted {
+  color: #8b5f16;
+  background: rgba(207, 170, 64, 0.18);
+}
+
+.workflow-builder-needs-review,
+.workflow-builder-blocked,
+.workflow-builder-manual {
+  color: #8d3325;
+  background: rgba(201, 104, 85, 0.16);
+}
+
 .notice {
   display: flex;
   align-items: flex-start;
@@ -1080,6 +1126,7 @@ th {
   .global-currency-grid,
   .scheduling-grid,
   .sentiment-grid,
+  .workflow-builder-grid,
   .loading-grid {
     grid-template-columns: 1fr;
   }

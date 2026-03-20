@@ -424,6 +424,40 @@ export interface SentimentAnalysisDashboard {
   signals: SentimentSignal[];
 }
 
+export interface WorkflowBuilderTemplate {
+  id: string;
+  name: string;
+  category: string;
+  status: "Active" | "Draft" | "Needs Review";
+  automationCoverage: number;
+  conditionalBranches: number;
+  stepCount: number;
+  summary: string;
+}
+
+export interface WorkflowBuilderNode {
+  id: string;
+  templateId: string;
+  label: string;
+  nodeType: "Trigger" | "Action" | "Condition" | "Approval";
+  owner: string;
+  executionMode: "Automated" | "Assisted" | "Manual";
+  status: "Ready" | "Watch" | "Blocked";
+  detail: string;
+}
+
+export interface CustomWorkflowBuilder {
+  generatedAt: string;
+  summary: {
+    templates: number;
+    automatedSteps: number;
+    conditionalBranches: number;
+    activeWorkflows: number;
+  };
+  templates: WorkflowBuilderTemplate[];
+  nodes: WorkflowBuilderNode[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -472,6 +506,7 @@ export interface DashboardData {
   globalPayrollSupport: GlobalPayrollSupport;
   advancedSchedulingEngine: AdvancedSchedulingEngine;
   sentimentAnalysisDashboard: SentimentAnalysisDashboard;
+  customWorkflowBuilder: CustomWorkflowBuilder;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

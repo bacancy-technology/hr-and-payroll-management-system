@@ -14,6 +14,7 @@ import { IntelligentDocumentProcessingPanel } from "@/components/intelligent-doc
 import { GlobalPayrollSupportPanel } from "@/components/global-payroll-support/global-payroll-support-panel";
 import { AdvancedSchedulingEnginePanel } from "@/components/advanced-scheduling-engine/advanced-scheduling-engine-panel";
 import { SentimentAnalysisDashboardPanel } from "@/components/sentiment-analysis-dashboard/sentiment-analysis-dashboard-panel";
+import { CustomWorkflowBuilderPanel } from "@/components/custom-workflow-builder/custom-workflow-builder-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -207,6 +208,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <AdvancedSchedulingEnginePanel engine={data.advancedSchedulingEngine} />
 
       <SentimentAnalysisDashboardPanel dashboard={data.sentimentAnalysisDashboard} />
+
+      <CustomWorkflowBuilderPanel builder={data.customWorkflowBuilder} />
     </div>
   );
 }

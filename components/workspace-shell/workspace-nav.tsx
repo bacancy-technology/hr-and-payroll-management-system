@@ -20,7 +20,10 @@ export function WorkspaceNav() {
   return (
     <nav className="workspace-nav" aria-label="Workspace sections">
       {WORKSPACE_LINKS.map((link) => {
-        const isActive = pathname === link.href;
+        const isActive =
+          link.href === "/workspace"
+            ? pathname === link.href
+            : pathname === link.href || pathname.startsWith(`${link.href}/`);
 
         return (
           <Link

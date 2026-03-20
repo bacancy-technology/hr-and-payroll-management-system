@@ -4,6 +4,31 @@ import { DepartmentsTablePanel } from "@/components/admin/departments-table-pane
 import { RoleAssignmentsTablePanel } from "@/components/admin/role-assignments-table-panel";
 import { MultiCompanyOverviewPanel } from "@/components/multi-company-support/multi-company-overview-panel";
 import { WorkspacePageHeader } from "@/components/workspace-shell/workspace-page-header";
+import { WorkspaceSection } from "@/components/workspace-shell/workspace-section";
+import { WorkspaceSectionMap } from "@/components/workspace-shell/workspace-section-map";
+
+const ADMIN_SECTIONS = [
+  {
+    id: "company-structure",
+    title: "Company Structure",
+    description: "Organization identity and multi-entity structure.",
+  },
+  {
+    id: "department-ownership",
+    title: "Department Ownership",
+    description: "Department leads and operating structure.",
+  },
+  {
+    id: "access-roles",
+    title: "Access Roles",
+    description: "Role definitions and platform permission design.",
+  },
+  {
+    id: "role-assignments",
+    title: "Role Assignments",
+    description: "Who has which role and when assignments changed.",
+  },
+];
 
 export default function AdminPage() {
   return (
@@ -14,13 +39,42 @@ export default function AdminPage() {
         description="Admin-facing frontend coverage includes company identity, department ownership, role design, role assignments, and multi-entity workspace structure."
       />
 
-      <section className="workspace-section-grid">
-        <CompanyOverviewPanel />
-        <DepartmentsTablePanel />
-        <AccessRolesTablePanel />
-        <RoleAssignmentsTablePanel />
-        <MultiCompanyOverviewPanel />
-      </section>
+      <WorkspaceSectionMap items={ADMIN_SECTIONS} />
+
+      <div className="workspace-section-stack">
+        <WorkspaceSection
+          description="Set the primary organization profile and understand how multiple entities are arranged in the workspace."
+          id="company-structure"
+          title="Company Structure"
+        >
+          <CompanyOverviewPanel />
+          <MultiCompanyOverviewPanel />
+        </WorkspaceSection>
+
+        <WorkspaceSection
+          description="Use the department surface to validate ownership lines and head-of-function coverage."
+          id="department-ownership"
+          title="Department Ownership"
+        >
+          <DepartmentsTablePanel />
+        </WorkspaceSection>
+
+        <WorkspaceSection
+          description="Review role definitions independently from assignments so access design changes are easier to reason about."
+          id="access-roles"
+          title="Access Roles"
+        >
+          <AccessRolesTablePanel />
+        </WorkspaceSection>
+
+        <WorkspaceSection
+          description="Track live role assignment coverage across the organization."
+          id="role-assignments"
+          title="Role Assignments"
+        >
+          <RoleAssignmentsTablePanel />
+        </WorkspaceSection>
+      </div>
     </>
   );
 }

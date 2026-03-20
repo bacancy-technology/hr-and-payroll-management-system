@@ -41,6 +41,8 @@ export function ApiTablePanel<T>({
   const [items, setItems] = useState<T[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [lastUpdatedLabel, setLastUpdatedLabel] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -58,6 +60,12 @@ export function ApiTablePanel<T>({
         if (active) {
           setItems(selectItems(payload.data));
           setError(null);
+          setLastUpdatedLabel(
+            new Date().toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+            }),
+          );
         }
       } catch (loadError) {
         if (active) {
@@ -76,7 +84,7 @@ export function ApiTablePanel<T>({
     return () => {
       active = false;
     };
-  }, [endpoint, selectItems]);
+  }, [endpoint, refreshCount, selectItems]);
 
   return (
     <article className="panel">
@@ -85,9 +93,19 @@ export function ApiTablePanel<T>({
           <h3>{title}</h3>
           <p className="panel-subtitle">{subtitle}</p>
         </div>
-        <span className="pill">
-          {loading ? "Loading" : `${items.length} ${countLabel}`}
-        </span>
+        <div className="workspace-panel-actions">
+          {lastUpdatedLabel ? <span className="muted">Updated {lastUpdatedLabel}</span> : null}
+          <span className="pill">
+            {loading ? "Loading" : `${items.length} ${countLabel}`}
+          </span>
+          <button
+            className="button-ghost workspace-panel-refresh"
+            onClick={() => setRefreshCount((value) => value + 1)}
+            type="button"
+          >
+            {error ? "Retry" : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {error ? <p className="workspace-panel-message workspace-panel-message-error">{error}</p> : null}

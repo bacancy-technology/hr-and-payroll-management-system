@@ -28,6 +28,8 @@ export function ApiOverviewPanel({
   const [payload, setPayload] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [lastUpdatedLabel, setLastUpdatedLabel] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +47,12 @@ export function ApiOverviewPanel({
         if (active) {
           setPayload(body.data ?? null);
           setError(null);
+          setLastUpdatedLabel(
+            new Date().toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+            }),
+          );
         }
       } catch (loadError) {
         if (active) {
@@ -63,7 +71,7 @@ export function ApiOverviewPanel({
     return () => {
       active = false;
     };
-  }, [endpoint]);
+  }, [endpoint, refreshCount]);
 
   const metrics = payload ? selectMetrics(payload) : [];
 
@@ -74,14 +82,28 @@ export function ApiOverviewPanel({
           <h3>{title}</h3>
           <p className="panel-subtitle">{subtitle}</p>
         </div>
-        <span className="pill">
-          {loading ? "Loading" : `${metrics.length} ${metricLabel}`}
-        </span>
+        <div className="workspace-panel-actions">
+          {lastUpdatedLabel ? <span className="muted">Updated {lastUpdatedLabel}</span> : null}
+          <span className="pill">
+            {loading ? "Loading" : `${metrics.length} ${metricLabel}`}
+          </span>
+          <button
+            className="button-ghost workspace-panel-refresh"
+            onClick={() => setRefreshCount((value) => value + 1)}
+            type="button"
+          >
+            {error ? "Retry" : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {error ? <p className="workspace-panel-message workspace-panel-message-error">{error}</p> : null}
 
       {!error && loading ? <p className="workspace-panel-message">Loading data...</p> : null}
+
+      {!error && !loading && metrics.length === 0 ? (
+        <p className="workspace-panel-message">No summary metrics are available right now.</p>
+      ) : null}
 
       {!error && !loading && metrics.length > 0 ? (
         <div className="forecast-summary-grid">

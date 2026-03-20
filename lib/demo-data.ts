@@ -1,5 +1,6 @@
 import type {
   Announcement,
+  AutomatedJobPostingIntegration,
   AutomatedComplianceMonitoring,
   BenefitsRecommendation,
   BlockchainPayrollVerification,
@@ -452,6 +453,79 @@ export function getDemoDynamicOrgChartVisualization(): DynamicOrgChartVisualizat
   };
 }
 
+export function getDemoAutomatedJobPostingIntegration(): AutomatedJobPostingIntegration {
+  return {
+    generatedAt: "2026-03-20T09:45:00.000Z",
+    summary: {
+      connectedBoards: 2,
+      activePostings: 3,
+      trackedApplications: 41,
+      syncedBoards: 2,
+    },
+    boards: [
+      {
+        id: "job-board-linkedin",
+        provider: "linkedin-jobs",
+        displayName: "LinkedIn Jobs",
+        status: "Connected",
+        lastSyncedAt: "2026-03-20T05:30:00Z",
+        postedJobs: 3,
+        applicationsTracked: 18,
+      },
+      {
+        id: "job-board-indeed",
+        provider: "indeed",
+        displayName: "Indeed",
+        status: "Connected",
+        lastSyncedAt: "2026-03-20T05:25:00Z",
+        postedJobs: 3,
+        applicationsTracked: 15,
+      },
+      {
+        id: "job-board-wellfound",
+        provider: "wellfound",
+        displayName: "Wellfound",
+        status: "Disconnected",
+        lastSyncedAt: null,
+        postedJobs: 0,
+        applicationsTracked: 0,
+      },
+    ],
+    postings: [
+      {
+        id: "posting-people",
+        title: "Talent Acquisition Partner",
+        department: "People",
+        employmentType: "Full-time",
+        status: "Posted",
+        targetBoards: ["LinkedIn Jobs", "Indeed"],
+        applications: 14,
+        source: "Anika Raman hiring plan",
+      },
+      {
+        id: "posting-finance",
+        title: "Payroll Operations Analyst",
+        department: "Finance",
+        employmentType: "Full-time",
+        status: "Posted",
+        targetBoards: ["LinkedIn Jobs", "Indeed"],
+        applications: 16,
+        source: "Priya Nair hiring plan",
+      },
+      {
+        id: "posting-engineering",
+        title: "Senior Backend Engineer",
+        department: "Engineering",
+        employmentType: "Full-time",
+        status: "Syncing",
+        targetBoards: ["LinkedIn Jobs", "Indeed"],
+        applications: 11,
+        source: "Workforce planning",
+      },
+    ],
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -549,6 +623,7 @@ export function getDemoDashboardData(
     voiceActivatedHrAssistant: getDemoVoiceActivatedHrAssistant(),
     blockchainPayrollVerification: getDemoBlockchainPayrollVerification(),
     dynamicOrgChartVisualization: getDemoDynamicOrgChartVisualization(),
+    automatedJobPostingIntegration: getDemoAutomatedJobPostingIntegration(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

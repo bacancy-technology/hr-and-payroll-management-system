@@ -7,6 +7,7 @@ import { ComplianceMonitoringPanel } from "@/components/automated-compliance-mon
 import { VoiceAssistantPanel } from "@/components/voice-activated-hr-assistant/voice-assistant-panel";
 import { BlockchainPayrollPanel } from "@/components/blockchain-payroll-verification/blockchain-payroll-panel";
 import { OrgChartPanel } from "@/components/dynamic-org-chart-visualization/org-chart-panel";
+import { JobPostingPanel } from "@/components/automated-job-posting-integration/job-posting-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -186,6 +187,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <BlockchainPayrollPanel verification={data.blockchainPayrollVerification} />
 
       <OrgChartPanel orgChart={data.dynamicOrgChartVisualization} />
+
+      <JobPostingPanel integration={data.automatedJobPostingIntegration} />
     </div>
   );
 }

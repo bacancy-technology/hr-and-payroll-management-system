@@ -212,6 +212,39 @@ export interface DynamicOrgChartVisualization {
   links: OrgChartLink[];
 }
 
+export interface JobBoardConnection {
+  id: string;
+  provider: string;
+  displayName: string;
+  status: string;
+  lastSyncedAt: string | null;
+  postedJobs: number;
+  applicationsTracked: number;
+}
+
+export interface JobPosting {
+  id: string;
+  title: string;
+  department: string;
+  employmentType: string;
+  status: "Draft" | "Posted" | "Syncing";
+  targetBoards: string[];
+  applications: number;
+  source: string;
+}
+
+export interface AutomatedJobPostingIntegration {
+  generatedAt: string;
+  summary: {
+    connectedBoards: number;
+    activePostings: number;
+    trackedApplications: number;
+    syncedBoards: number;
+  };
+  boards: JobBoardConnection[];
+  postings: JobPosting[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -253,6 +286,7 @@ export interface DashboardData {
   voiceActivatedHrAssistant: VoiceActivatedHrAssistant;
   blockchainPayrollVerification: BlockchainPayrollVerification;
   dynamicOrgChartVisualization: DynamicOrgChartVisualization;
+  automatedJobPostingIntegration: AutomatedJobPostingIntegration;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

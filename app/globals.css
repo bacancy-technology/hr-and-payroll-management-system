@@ -717,6 +717,22 @@ th {
   background: rgba(255, 255, 255, 0.62);
 }
 
+.job-board-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.job-board-card,
+.job-posting-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
 .notice {
   display: flex;
   align-items: flex-start;
@@ -873,6 +889,7 @@ th {
   .voice-command-list,
   .ledger-hash-grid,
   .org-chart-grid,
+  .job-board-grid,
   .loading-grid {
     grid-template-columns: 1fr;
   }

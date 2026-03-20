@@ -4,6 +4,36 @@
     "industry": "SaaS",
     "headquarters": "Bengaluru"
   },
+  "companyEntities": [
+    {
+      "seedKey": "entity-india-operations",
+      "name": "Northstar India",
+      "legalName": "Northstar People Ops India Pvt Ltd",
+      "entityType": "Private Limited",
+      "taxId": "GSTIN-29AAACN1001R1ZK",
+      "registrationState": "Karnataka",
+      "headquarters": "Bengaluru",
+      "payrollFrequency": "Monthly",
+      "employeeCount": 38,
+      "status": "Active",
+      "primaryContactName": "Anika Raman",
+      "primaryContactEmail": "anika.raman@pulsehr.app"
+    },
+    {
+      "seedKey": "entity-us-operations",
+      "name": "Northstar US",
+      "legalName": "Northstar People Ops LLC",
+      "entityType": "LLC",
+      "taxId": "EIN-84-2219041",
+      "registrationState": "California",
+      "headquarters": "San Francisco",
+      "payrollFrequency": "Biweekly",
+      "employeeCount": 24,
+      "status": "Active",
+      "primaryContactName": "Priya Nair",
+      "primaryContactEmail": "priya.nair@pulsehr.app"
+    }
+  ],
   "departments": [
     {
       "seedKey": "department-people",

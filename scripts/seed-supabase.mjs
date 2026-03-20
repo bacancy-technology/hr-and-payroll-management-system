@@ -86,6 +86,22 @@ async function main() {
     throw new Error(`Failed to update organization: ${organizationError.message}`);
   }
 
+  const companyEntities = (seedData.companyEntities ?? []).map((entity) => ({
+    organization_id: organizationId,
+    seed_key: entity.seedKey,
+    name: entity.name,
+    legal_name: entity.legalName,
+    entity_type: entity.entityType,
+    tax_id: entity.taxId ?? null,
+    registration_state: entity.registrationState,
+    headquarters: entity.headquarters,
+    payroll_frequency: entity.payrollFrequency,
+    employee_count: entity.employeeCount ?? 0,
+    status: entity.status,
+    primary_contact_name: entity.primaryContactName ?? null,
+    primary_contact_email: entity.primaryContactEmail ?? null,
+  }));
+
   const departments = seedData.departments.map((department) => ({
     organization_id: organizationId,
     seed_key: department.seedKey,
@@ -378,8 +394,11 @@ async function main() {
     display_order: announcement.displayOrder,
   }));
 
-  const [{ error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: complianceRulesError }, { error: taxFilingsError }, { error: workersCompPoliciesError }, { error: integrationsError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
+  const [{ error: companyEntitiesError }, { error: employeesError }, { error: contractorsError }, { error: payrollError }, { error: payPeriodsError }, { error: holidaysError }, { error: leaveError }, { error: expensesError }, { error: complianceRulesError }, { error: taxFilingsError }, { error: workersCompPoliciesError }, { error: integrationsError }, { error: benefitsPlansError }, { error: performanceTemplatesError }, { error: announcementsError }] =
     await Promise.all([
+      supabase.from("company_entities").upsert(companyEntities, {
+        onConflict: "organization_id,seed_key",
+      }),
       supabase.from("employees").upsert(employees, {
         onConflict: "organization_id,seed_key",
       }),
@@ -423,6 +442,10 @@ async function main() {
         onConflict: "organization_id,seed_key",
       }),
     ]);
+
+  if (companyEntitiesError) {
+    throw new Error(`Failed to seed company entities: ${companyEntitiesError.message}`);
+  }
 
   if (employeesError) {
     throw new Error(`Failed to seed employees: ${employeesError.message}`);
@@ -959,6 +982,7 @@ async function main() {
   }
 
   console.log(`Seeded organization ${organizationId}`);
+  console.log(`Company entities: ${companyEntities.length}`);
   console.log(`Departments: ${departments.length}`);
   console.log(`Access roles: ${accessRoles.length}`);
   console.log(`Role assignments: ${roleAssignments.length}`);

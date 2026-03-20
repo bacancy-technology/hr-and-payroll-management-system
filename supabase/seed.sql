@@ -11,6 +11,66 @@ set
   industry = excluded.industry,
   headquarters = excluded.headquarters;
 
+insert into public.company_entities (
+  organization_id,
+  seed_key,
+  name,
+  legal_name,
+  entity_type,
+  tax_id,
+  registration_state,
+  headquarters,
+  payroll_frequency,
+  employee_count,
+  status,
+  primary_contact_name,
+  primary_contact_email
+)
+values
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'entity-india-operations',
+    'Northstar India',
+    'Northstar People Ops India Pvt Ltd',
+    'Private Limited',
+    'GSTIN-29AAACN1001R1ZK',
+    'Karnataka',
+    'Bengaluru',
+    'Monthly',
+    38,
+    'Active',
+    'Anika Raman',
+    'anika.raman@pulsehr.app'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'entity-us-operations',
+    'Northstar US',
+    'Northstar People Ops LLC',
+    'LLC',
+    'EIN-84-2219041',
+    'California',
+    'San Francisco',
+    'Biweekly',
+    24,
+    'Active',
+    'Priya Nair',
+    'priya.nair@pulsehr.app'
+  )
+on conflict (organization_id, seed_key) do update
+set
+  name = excluded.name,
+  legal_name = excluded.legal_name,
+  entity_type = excluded.entity_type,
+  tax_id = excluded.tax_id,
+  registration_state = excluded.registration_state,
+  headquarters = excluded.headquarters,
+  payroll_frequency = excluded.payroll_frequency,
+  employee_count = excluded.employee_count,
+  status = excluded.status,
+  primary_contact_name = excluded.primary_contact_name,
+  primary_contact_email = excluded.primary_contact_email;
+
 insert into public.departments (
   organization_id,
   seed_key,

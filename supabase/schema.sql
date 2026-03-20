@@ -17,6 +17,24 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.company_entities (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  seed_key text not null default gen_random_uuid()::text,
+  name text not null,
+  legal_name text not null,
+  entity_type text not null default 'LLC',
+  tax_id text,
+  registration_state text not null,
+  headquarters text not null,
+  payroll_frequency text not null default 'Biweekly',
+  employee_count integer not null default 0 check (employee_count >= 0),
+  status text not null default 'Active',
+  primary_contact_name text,
+  primary_contact_email text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.departments (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
@@ -814,7 +832,41 @@ update public.announcements set seed_key = gen_random_uuid()::text where seed_ke
 alter table public.announcements alter column seed_key set default gen_random_uuid()::text;
 alter table public.announcements alter column seed_key set not null;
 
+alter table public.company_entities add column if not exists seed_key text;
+update public.company_entities set seed_key = gen_random_uuid()::text where seed_key is null;
+alter table public.company_entities alter column seed_key set default gen_random_uuid()::text;
+alter table public.company_entities alter column seed_key set not null;
+alter table public.company_entities add column if not exists legal_name text;
+update public.company_entities set legal_name = coalesce(legal_name, name, 'Entity') where legal_name is null;
+alter table public.company_entities alter column legal_name set not null;
+alter table public.company_entities add column if not exists entity_type text;
+update public.company_entities set entity_type = 'LLC' where entity_type is null;
+alter table public.company_entities alter column entity_type set default 'LLC';
+alter table public.company_entities alter column entity_type set not null;
+alter table public.company_entities add column if not exists tax_id text;
+alter table public.company_entities add column if not exists registration_state text;
+update public.company_entities set registration_state = 'Unknown' where registration_state is null;
+alter table public.company_entities alter column registration_state set not null;
+alter table public.company_entities add column if not exists headquarters text;
+update public.company_entities set headquarters = 'Unknown' where headquarters is null;
+alter table public.company_entities alter column headquarters set not null;
+alter table public.company_entities add column if not exists payroll_frequency text;
+update public.company_entities set payroll_frequency = 'Biweekly' where payroll_frequency is null;
+alter table public.company_entities alter column payroll_frequency set default 'Biweekly';
+alter table public.company_entities alter column payroll_frequency set not null;
+alter table public.company_entities add column if not exists employee_count integer;
+update public.company_entities set employee_count = 0 where employee_count is null;
+alter table public.company_entities alter column employee_count set default 0;
+alter table public.company_entities alter column employee_count set not null;
+alter table public.company_entities add column if not exists status text;
+update public.company_entities set status = 'Active' where status is null;
+alter table public.company_entities alter column status set default 'Active';
+alter table public.company_entities alter column status set not null;
+alter table public.company_entities add column if not exists primary_contact_name text;
+alter table public.company_entities add column if not exists primary_contact_email text;
+
 create index if not exists departments_organization_id_idx on public.departments (organization_id);
+create index if not exists company_entities_organization_id_idx on public.company_entities (organization_id);
 create index if not exists access_roles_organization_id_idx on public.access_roles (organization_id);
 create index if not exists role_assignments_organization_id_idx on public.role_assignments (organization_id);
 create index if not exists role_assignments_role_id_idx on public.role_assignments (role_id);
@@ -869,6 +921,10 @@ create unique index if not exists departments_organization_seed_key_idx
   on public.departments (organization_id, seed_key);
 create unique index if not exists departments_organization_name_idx
   on public.departments (organization_id, name);
+create unique index if not exists company_entities_organization_seed_key_idx
+  on public.company_entities (organization_id, seed_key);
+create unique index if not exists company_entities_organization_name_idx
+  on public.company_entities (organization_id, name);
 create unique index if not exists access_roles_organization_seed_key_idx
   on public.access_roles (organization_id, seed_key);
 create unique index if not exists access_roles_organization_name_idx
@@ -956,6 +1012,7 @@ as $$
 $$;
 
 alter table public.profiles enable row level security;
+alter table public.company_entities enable row level security;
 alter table public.departments enable row level security;
 alter table public.access_roles enable row level security;
 alter table public.role_assignments enable row level security;
@@ -1017,6 +1074,35 @@ for update
 to authenticated
 using (id = public.current_user_organization_id())
 with check (id = public.current_user_organization_id());
+
+drop policy if exists "users can read company entities in their organization" on public.company_entities;
+create policy "users can read company entities in their organization"
+on public.company_entities
+for select
+to authenticated
+using (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can insert company entities in their organization" on public.company_entities;
+create policy "users can insert company entities in their organization"
+on public.company_entities
+for insert
+to authenticated
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can update company entities in their organization" on public.company_entities;
+create policy "users can update company entities in their organization"
+on public.company_entities
+for update
+to authenticated
+using (organization_id = public.current_user_organization_id())
+with check (organization_id = public.current_user_organization_id());
+
+drop policy if exists "users can delete company entities in their organization" on public.company_entities;
+create policy "users can delete company entities in their organization"
+on public.company_entities
+for delete
+to authenticated
+using (organization_id = public.current_user_organization_id());
 
 drop policy if exists "users can read roles in their organization" on public.access_roles;
 create policy "users can read roles in their organization"

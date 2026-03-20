@@ -8,6 +8,7 @@ import {
   buildSummaryMetrics,
   getDemoDynamicOrgChartVisualization,
   getDemoEmployeeWellnessDashboard,
+  getDemoGlobalPayrollSupport,
   getDemoIntelligentDocumentProcessing,
   getDemoRealTimePayrollCostTracking,
   getDemoPredictiveWorkforceAnalytics,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/demo-data";
 import { getAutomatedJobPostingIntegration } from "@/lib/modules/automated-job-posting-integration/services/automated-job-posting-integration-service";
 import { getEmployeeWellnessDashboard } from "@/lib/modules/employee-wellness-dashboard/services/employee-wellness-dashboard-service";
+import { getGlobalPayrollSupport } from "@/lib/modules/global-payroll-support/services/global-payroll-support-service";
 import { getIntelligentDocumentProcessing } from "@/lib/modules/intelligent-document-processing/services/intelligent-document-processing-service";
 import { getRealTimePayrollCostTracking } from "@/lib/modules/real-time-payroll-cost-tracking/services/real-time-payroll-cost-tracking-service";
 import { getBlockchainPayrollVerification } from "@/lib/modules/blockchain-payroll-verification/services/blockchain-payroll-verification-service";
@@ -263,6 +265,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const intelligentDocumentProcessing = organizationId
     ? await getIntelligentDocumentProcessing(supabase, organizationId).catch(() => getDemoIntelligentDocumentProcessing())
     : getDemoIntelligentDocumentProcessing();
+  const globalPayrollSupport = organizationId
+    ? await getGlobalPayrollSupport(supabase, organizationId).catch(() => getDemoGlobalPayrollSupport())
+    : getDemoGlobalPayrollSupport();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -326,6 +331,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     employeeWellnessDashboard,
     realTimePayrollCostTracking,
     intelligentDocumentProcessing,
+    globalPayrollSupport,
     leaveRequests,
     announcements,
   };

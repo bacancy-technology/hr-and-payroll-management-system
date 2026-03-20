@@ -11,6 +11,7 @@ import { JobPostingPanel } from "@/components/automated-job-posting-integration/
 import { WellnessDashboardPanel } from "@/components/employee-wellness-dashboard/wellness-dashboard-panel";
 import { PayrollCostTrackingPanel } from "@/components/real-time-payroll-cost-tracking/payroll-cost-tracking-panel";
 import { IntelligentDocumentProcessingPanel } from "@/components/intelligent-document-processing/intelligent-document-processing-panel";
+import { GlobalPayrollSupportPanel } from "@/components/global-payroll-support/global-payroll-support-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -198,6 +199,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <PayrollCostTrackingPanel tracking={data.realTimePayrollCostTracking} />
 
       <IntelligentDocumentProcessingPanel processing={data.intelligentDocumentProcessing} />
+
+      <GlobalPayrollSupportPanel support={data.globalPayrollSupport} />
     </div>
   );
 }

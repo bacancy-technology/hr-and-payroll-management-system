@@ -790,6 +790,30 @@ th {
   border: 1px solid rgba(23, 33, 43, 0.08);
 }
 
+.global-payroll-grid,
+.global-currency-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.global-payroll-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.global-currency-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.global-payroll-card,
+.global-currency-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
 .notice {
   display: flex;
   align-items: flex-start;
@@ -950,6 +974,8 @@ th {
   .wellness-metrics-grid,
   .wellness-grid,
   .document-field-grid,
+  .global-payroll-grid,
+  .global-currency-grid,
   .loading-grid {
     grid-template-columns: 1fr;
   }

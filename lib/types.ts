@@ -332,6 +332,34 @@ export interface IntelligentDocumentProcessing {
   documents: IntelligentDocumentRecord[];
 }
 
+export interface GlobalPayrollRegion {
+  id: string;
+  entityName: string;
+  country: string;
+  currency: string;
+  payrollFrequency: string;
+  employeeCount: number;
+  complianceStatus: "On Track" | "Watch" | "At Risk";
+}
+
+export interface GlobalPayrollCurrency {
+  currency: string;
+  countries: number;
+  employees: number;
+}
+
+export interface GlobalPayrollSupport {
+  generatedAt: string;
+  summary: {
+    countries: number;
+    currencies: number;
+    supportedEmployees: number;
+    atRiskRegions: number;
+  };
+  regions: GlobalPayrollRegion[];
+  currencies: GlobalPayrollCurrency[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -377,6 +405,7 @@ export interface DashboardData {
   employeeWellnessDashboard: EmployeeWellnessDashboard;
   realTimePayrollCostTracking: RealTimePayrollCostTracking;
   intelligentDocumentProcessing: IntelligentDocumentProcessing;
+  globalPayrollSupport: GlobalPayrollSupport;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

@@ -10,6 +10,7 @@ import type {
   DynamicOrgChartVisualization,
   EmployeeWellnessDashboard,
   Employee,
+  GlobalPayrollSupport,
   HiringWindowRecommendation,
   IntelligentDocumentProcessing,
   LeaveRequest,
@@ -770,6 +771,50 @@ export function getDemoIntelligentDocumentProcessing(): IntelligentDocumentProce
   };
 }
 
+export function getDemoGlobalPayrollSupport(): GlobalPayrollSupport {
+  return {
+    generatedAt: "2026-03-20T10:45:00.000Z",
+    summary: {
+      countries: 2,
+      currencies: 2,
+      supportedEmployees: 62,
+      atRiskRegions: 1,
+    },
+    regions: [
+      {
+        id: "entity-india-operations",
+        entityName: "Northstar India",
+        country: "India",
+        currency: "INR",
+        payrollFrequency: "Monthly",
+        employeeCount: 38,
+        complianceStatus: "On Track",
+      },
+      {
+        id: "entity-us-operations",
+        entityName: "Northstar US",
+        country: "United States",
+        currency: "USD",
+        payrollFrequency: "Biweekly",
+        employeeCount: 24,
+        complianceStatus: "Watch",
+      },
+    ],
+    currencies: [
+      {
+        currency: "INR",
+        countries: 1,
+        employees: 38,
+      },
+      {
+        currency: "USD",
+        countries: 1,
+        employees: 24,
+      },
+    ],
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -871,6 +916,7 @@ export function getDemoDashboardData(
     employeeWellnessDashboard: getDemoEmployeeWellnessDashboard(),
     realTimePayrollCostTracking: getDemoRealTimePayrollCostTracking(),
     intelligentDocumentProcessing: getDemoIntelligentDocumentProcessing(),
+    globalPayrollSupport: getDemoGlobalPayrollSupport(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

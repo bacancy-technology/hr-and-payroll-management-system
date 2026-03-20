@@ -90,6 +90,30 @@ export interface PredictiveWorkforceAnalytics {
   compensationBenchmarks: CompensationBenchmarkInsight[];
 }
 
+export interface BenefitsRecommendation {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  recommendedPlanId: string;
+  recommendedPlanName: string;
+  category: string;
+  priority: "Consider" | "Recommended" | "Priority";
+  confidenceScore: number;
+  rationale: string;
+  lifeEvents: string[];
+}
+
+export interface SmartBenefitsRecommendations {
+  generatedAt: string;
+  summary: {
+    employeesEvaluated: number;
+    recommendationsGenerated: number;
+    mostRecommendedCategory: string;
+  };
+  recommendations: BenefitsRecommendation[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -126,6 +150,7 @@ export interface DashboardData {
   payrollRuns: PayrollRun[];
   payrollAnomalies: PayrollAnomaly[];
   predictiveWorkforceAnalytics: PredictiveWorkforceAnalytics;
+  smartBenefitsRecommendations: SmartBenefitsRecommendations;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

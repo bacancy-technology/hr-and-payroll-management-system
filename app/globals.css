@@ -533,6 +533,46 @@ th {
   background: rgba(13, 122, 115, 0.12);
 }
 
+.benefits-recommendation-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.benefits-life-events {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.benefits-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.benefits-pill-priority {
+  color: #8b2f1c;
+  background: rgba(203, 91, 61, 0.14);
+}
+
+.benefits-pill-recommended {
+  color: var(--warning);
+  background: rgba(217, 119, 6, 0.14);
+}
+
+.benefits-pill-consider {
+  color: var(--accent-alt);
+  background: rgba(13, 122, 115, 0.12);
+}
+
 .notice {
   display: flex;
   align-items: flex-start;

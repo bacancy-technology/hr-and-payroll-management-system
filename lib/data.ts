@@ -1,9 +1,15 @@
 import { redirect } from "next/navigation";
 
-import { getDemoDashboardData, buildSummaryMetrics, getDemoPredictiveWorkforceAnalytics } from "@/lib/demo-data";
+import {
+  getDemoDashboardData,
+  buildSummaryMetrics,
+  getDemoPredictiveWorkforceAnalytics,
+  getDemoSmartBenefitsRecommendations,
+} from "@/lib/demo-data";
 import { env } from "@/lib/env";
 import { listPayrollAnomalies } from "@/lib/modules/payroll-anomaly-detection/services/payroll-anomaly-detection-service";
 import { getPredictiveWorkforceAnalytics } from "@/lib/modules/predictive-workforce-analytics/services/predictive-workforce-analytics-service";
+import { getSmartBenefitsRecommendations } from "@/lib/modules/smart-benefits-recommendations/services/smart-benefits-recommendations-service";
 import { createServerClient } from "@/lib/supabase/server";
 import type { DashboardData, Employee, LeaveRequest, PayrollRun, UserProfile } from "@/lib/types";
 import { initialsFromName } from "@/lib/utils";
@@ -214,6 +220,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const predictiveWorkforceAnalytics = organizationId
     ? await getPredictiveWorkforceAnalytics(supabase, organizationId).catch(() => getDemoPredictiveWorkforceAnalytics())
     : getDemoPredictiveWorkforceAnalytics();
+  const smartBenefitsRecommendations = organizationId
+    ? await getSmartBenefitsRecommendations(supabase, organizationId).catch(() => getDemoSmartBenefitsRecommendations())
+    : getDemoSmartBenefitsRecommendations();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -268,6 +277,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     payrollRuns,
     payrollAnomalies,
     predictiveWorkforceAnalytics,
+    smartBenefitsRecommendations,
     leaveRequests,
     announcements,
   };

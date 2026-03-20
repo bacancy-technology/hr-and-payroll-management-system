@@ -1,5 +1,6 @@
 import type {
   Announcement,
+  BenefitsRecommendation,
   CompensationBenchmarkInsight,
   DashboardData,
   Employee,
@@ -9,6 +10,7 @@ import type {
   PayrollRun,
   PredictiveTurnoverRisk,
   PredictiveWorkforceAnalytics,
+  SmartBenefitsRecommendations,
   SummaryMetric,
   UserProfile,
 } from "@/lib/types";
@@ -176,6 +178,66 @@ export function getDemoPredictiveWorkforceAnalytics(): PredictiveWorkforceAnalyt
   };
 }
 
+const demoBenefitsRecommendations: BenefitsRecommendation[] = [
+  {
+    id: "benefits-rec-elena-health",
+    employeeId: "emp_005",
+    employeeName: "Elena Torres",
+    department: "People",
+    recommendedPlanId: "benefits-plan-health-plus",
+    recommendedPlanName: "Health Plus PPO",
+    category: "Health Insurance",
+    priority: "Priority",
+    confidenceScore: 0.91,
+    rationale:
+      "Peer adoption is strong for this plan. Newer employees typically finalize health selections during first-year setup. Upcoming compensation review is a natural benefits refresh moment.",
+    lifeEvents: ["New hire window", "Comp review approaching"],
+  },
+  {
+    id: "benefits-rec-noah-retirement",
+    employeeId: "emp_006",
+    employeeName: "Noah Kim",
+    department: "Finance",
+    recommendedPlanId: "benefits-plan-retirement-match",
+    recommendedPlanName: "Retirement Match 401(k)",
+    category: "Retirement",
+    priority: "Recommended",
+    confidenceScore: 0.82,
+    rationale:
+      "Peer adoption is strong for this plan. Employee has enough tenure to benefit from retirement matching. Upcoming compensation review is a natural benefits refresh moment.",
+    lifeEvents: ["New hire window", "Comp review approaching", "Coverage-sensitive leave"],
+  },
+  {
+    id: "benefits-rec-jordan-health",
+    employeeId: "emp_002",
+    employeeName: "Jordan Blake",
+    department: "Engineering",
+    recommendedPlanId: "benefits-plan-health-plus",
+    recommendedPlanName: "Health Plus PPO",
+    category: "Health Insurance",
+    priority: "Consider",
+    confidenceScore: 0.73,
+    rationale:
+      "Peer adoption is strong for this plan. Remote employees often respond well to stronger core coverage options.",
+    lifeEvents: ["Remote work setup"],
+  },
+];
+
+export function getDemoSmartBenefitsRecommendations(): SmartBenefitsRecommendations {
+  return {
+    generatedAt: "2026-03-20T08:45:00.000Z",
+    summary: {
+      employeesEvaluated: demoEmployees.length,
+      recommendationsGenerated: demoBenefitsRecommendations.length,
+      mostRecommendedCategory: "Health Insurance",
+    },
+    recommendations: demoBenefitsRecommendations.map((recommendation) => ({
+      ...recommendation,
+      lifeEvents: [...recommendation.lifeEvents],
+    })),
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -268,6 +330,7 @@ export function getDemoDashboardData(
       metrics: anomaly.metrics.map((metric) => ({ ...metric })),
     })),
     predictiveWorkforceAnalytics: getDemoPredictiveWorkforceAnalytics(),
+    smartBenefitsRecommendations: getDemoSmartBenefitsRecommendations(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

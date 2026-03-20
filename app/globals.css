@@ -757,6 +757,15 @@ th {
   background: rgba(255, 255, 255, 0.62);
 }
 
+.payroll-cost-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
 .notice {
   display: flex;
   align-items: flex-start;

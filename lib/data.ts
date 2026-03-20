@@ -8,12 +8,14 @@ import {
   buildSummaryMetrics,
   getDemoDynamicOrgChartVisualization,
   getDemoEmployeeWellnessDashboard,
+  getDemoRealTimePayrollCostTracking,
   getDemoPredictiveWorkforceAnalytics,
   getDemoSmartBenefitsRecommendations,
   getDemoVoiceActivatedHrAssistant,
 } from "@/lib/demo-data";
 import { getAutomatedJobPostingIntegration } from "@/lib/modules/automated-job-posting-integration/services/automated-job-posting-integration-service";
 import { getEmployeeWellnessDashboard } from "@/lib/modules/employee-wellness-dashboard/services/employee-wellness-dashboard-service";
+import { getRealTimePayrollCostTracking } from "@/lib/modules/real-time-payroll-cost-tracking/services/real-time-payroll-cost-tracking-service";
 import { getBlockchainPayrollVerification } from "@/lib/modules/blockchain-payroll-verification/services/blockchain-payroll-verification-service";
 import { getDynamicOrgChartVisualization } from "@/lib/modules/dynamic-org-chart-visualization/services/dynamic-org-chart-visualization-service";
 import { getAutomatedComplianceMonitoring } from "@/lib/modules/automated-compliance-monitoring/services/automated-compliance-monitoring-service";
@@ -253,6 +255,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const employeeWellnessDashboard = organizationId
     ? await getEmployeeWellnessDashboard(supabase, organizationId).catch(() => getDemoEmployeeWellnessDashboard())
     : getDemoEmployeeWellnessDashboard();
+  const realTimePayrollCostTracking = organizationId
+    ? await getRealTimePayrollCostTracking(supabase, organizationId).catch(() => getDemoRealTimePayrollCostTracking())
+    : getDemoRealTimePayrollCostTracking();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -314,6 +319,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     dynamicOrgChartVisualization,
     automatedJobPostingIntegration,
     employeeWellnessDashboard,
+    realTimePayrollCostTracking,
     leaveRequests,
     announcements,
   };

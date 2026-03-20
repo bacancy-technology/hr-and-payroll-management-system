@@ -13,6 +13,7 @@ import type {
   HiringWindowRecommendation,
   LeaveRequest,
   PayrollAnomaly,
+  RealTimePayrollCostTracking,
   PayrollRun,
   PredictiveTurnoverRisk,
   PredictiveWorkforceAnalytics,
@@ -614,6 +615,66 @@ export function getDemoEmployeeWellnessDashboard(): EmployeeWellnessDashboard {
   };
 }
 
+export function getDemoRealTimePayrollCostTracking(): RealTimePayrollCostTracking {
+  return {
+    generatedAt: "2026-03-20T10:15:00.000Z",
+    summary: {
+      currentAccruedCost: 213480,
+      projectedCloseCost: 425960,
+      budgetVariancePercent: 3.2,
+      activeDepartments: 4,
+    },
+    metrics: [
+      {
+        label: "Current accrued payroll",
+        amount: 213480,
+        detail: "16 of 31 days accrued in Late March 2026.",
+      },
+      {
+        label: "Projected close cost",
+        amount: 425960,
+        detail: "Projected end-of-period payroll using salary pace and current overtime.",
+      },
+      {
+        label: "Budget baseline",
+        amount: 412840,
+        detail: "Compared with March 2026.",
+      },
+      {
+        label: "Daily burn rate",
+        amount: 13342,
+        detail: "Average payroll cost accruing per elapsed workday.",
+      },
+    ],
+    breakdown: [
+      {
+        department: "Engineering",
+        accruedCost: 74210,
+        projectedCost: 148420,
+        headcount: 1,
+      },
+      {
+        department: "People",
+        accruedCost: 61940,
+        projectedCost: 123880,
+        headcount: 2,
+      },
+      {
+        department: "Finance",
+        accruedCost: 48630,
+        projectedCost: 97260,
+        headcount: 2,
+      },
+      {
+        department: "Design",
+        accruedCost: 28700,
+        projectedCost: 56400,
+        headcount: 1,
+      },
+    ],
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -713,6 +774,7 @@ export function getDemoDashboardData(
     dynamicOrgChartVisualization: getDemoDynamicOrgChartVisualization(),
     automatedJobPostingIntegration: getDemoAutomatedJobPostingIntegration(),
     employeeWellnessDashboard: getDemoEmployeeWellnessDashboard(),
+    realTimePayrollCostTracking: getDemoRealTimePayrollCostTracking(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

@@ -9,6 +9,7 @@ import { BlockchainPayrollPanel } from "@/components/blockchain-payroll-verifica
 import { OrgChartPanel } from "@/components/dynamic-org-chart-visualization/org-chart-panel";
 import { JobPostingPanel } from "@/components/automated-job-posting-integration/job-posting-panel";
 import { WellnessDashboardPanel } from "@/components/employee-wellness-dashboard/wellness-dashboard-panel";
+import { PayrollCostTrackingPanel } from "@/components/real-time-payroll-cost-tracking/payroll-cost-tracking-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -192,6 +193,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <JobPostingPanel integration={data.automatedJobPostingIntegration} />
 
       <WellnessDashboardPanel dashboard={data.employeeWellnessDashboard} />
+
+      <PayrollCostTrackingPanel tracking={data.realTimePayrollCostTracking} />
     </div>
   );
 }

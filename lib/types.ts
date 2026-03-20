@@ -280,6 +280,31 @@ export interface EmployeeWellnessDashboard {
   signals: WellnessSignal[];
 }
 
+export interface PayrollCostMetric {
+  label: string;
+  amount: number;
+  detail: string;
+}
+
+export interface PayrollCostDepartmentBreakdown {
+  department: string;
+  accruedCost: number;
+  projectedCost: number;
+  headcount: number;
+}
+
+export interface RealTimePayrollCostTracking {
+  generatedAt: string;
+  summary: {
+    currentAccruedCost: number;
+    projectedCloseCost: number;
+    budgetVariancePercent: number;
+    activeDepartments: number;
+  };
+  metrics: PayrollCostMetric[];
+  breakdown: PayrollCostDepartmentBreakdown[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -323,6 +348,7 @@ export interface DashboardData {
   dynamicOrgChartVisualization: DynamicOrgChartVisualization;
   automatedJobPostingIntegration: AutomatedJobPostingIntegration;
   employeeWellnessDashboard: EmployeeWellnessDashboard;
+  realTimePayrollCostTracking: RealTimePayrollCostTracking;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

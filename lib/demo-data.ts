@@ -8,6 +8,7 @@ import type {
   CompensationBenchmarkInsight,
   DashboardData,
   DynamicOrgChartVisualization,
+  EmployeeWellnessDashboard,
   Employee,
   HiringWindowRecommendation,
   LeaveRequest,
@@ -526,6 +527,93 @@ export function getDemoAutomatedJobPostingIntegration(): AutomatedJobPostingInte
   };
 }
 
+export function getDemoEmployeeWellnessDashboard(): EmployeeWellnessDashboard {
+  return {
+    generatedAt: "2026-03-20T10:00:00.000Z",
+    summary: {
+      participatingEmployees: 5,
+      wellnessResources: 3,
+      activeSignals: 4,
+      connectedApps: 1,
+    },
+    metrics: [
+      {
+        label: "Participation rate",
+        value: "83%",
+        detail: "Employees contributing wellness-relevant activity signals this cycle.",
+      },
+      {
+        label: "Average workday",
+        value: "8.1 hrs",
+        detail: "Based on approved and submitted tracked hours.",
+      },
+      {
+        label: "Approved recovery time",
+        value: "15 days",
+        detail: "Upcoming and completed approved PTO supporting time away.",
+      },
+      {
+        label: "Health coverage",
+        value: "1",
+        detail: "Employees currently enrolled in health-related benefits.",
+      },
+    ],
+    resources: [
+      {
+        id: "resource-mental-health-eap",
+        title: "Employee Assistance Program",
+        category: "Mental Health",
+        availability: "24/7",
+        description: "Confidential counseling sessions and manager escalation guidance.",
+      },
+      {
+        id: "resource-fitness-sync",
+        title: "Fitness App Sync",
+        category: "Fitness",
+        availability: "Connected",
+        description: "Weekly activity goals synced from supported wellness apps.",
+      },
+      {
+        id: "resource-burnout-coaching",
+        title: "Burnout Prevention Coaching",
+        category: "Manager Support",
+        availability: "Bookable",
+        description: "Structured coaching for workload planning and recovery routines.",
+      },
+    ],
+    signals: [
+      {
+        id: "wellness-signal-jordan-burnout",
+        employeeName: "Jordan Blake",
+        focusArea: "Workload balance",
+        signal: "Jordan Blake logged 3.4 overtime hours recently.",
+        recommendation: "Encourage recovery time and rebalance sprint or payroll-close responsibilities.",
+      },
+      {
+        id: "wellness-signal-priya-recovery",
+        employeeName: "Priya Nair",
+        focusArea: "Recovery time",
+        signal: "Priya Nair has no approved leave currently scheduled.",
+        recommendation: "Prompt a manager check-in about rest, flexibility, and upcoming time-off plans.",
+      },
+      {
+        id: "wellness-signal-elena-steady",
+        employeeName: "Elena Torres",
+        focusArea: "Steady state",
+        signal: "Elena Torres is trending within expected workload and time-away ranges.",
+        recommendation: "Maintain existing cadence and keep wellness resources visible.",
+      },
+      {
+        id: "wellness-signal-noah-recovery",
+        employeeName: "Noah Kim",
+        focusArea: "Recovery time",
+        signal: "Noah Kim has no approved leave currently scheduled.",
+        recommendation: "Prompt a manager check-in about rest, flexibility, and upcoming time-off plans.",
+      },
+    ],
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -624,6 +712,7 @@ export function getDemoDashboardData(
     blockchainPayrollVerification: getDemoBlockchainPayrollVerification(),
     dynamicOrgChartVisualization: getDemoDynamicOrgChartVisualization(),
     automatedJobPostingIntegration: getDemoAutomatedJobPostingIntegration(),
+    employeeWellnessDashboard: getDemoEmployeeWellnessDashboard(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

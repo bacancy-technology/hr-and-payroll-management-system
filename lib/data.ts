@@ -7,11 +7,13 @@ import {
   getDemoAutomatedComplianceMonitoring,
   buildSummaryMetrics,
   getDemoDynamicOrgChartVisualization,
+  getDemoEmployeeWellnessDashboard,
   getDemoPredictiveWorkforceAnalytics,
   getDemoSmartBenefitsRecommendations,
   getDemoVoiceActivatedHrAssistant,
 } from "@/lib/demo-data";
 import { getAutomatedJobPostingIntegration } from "@/lib/modules/automated-job-posting-integration/services/automated-job-posting-integration-service";
+import { getEmployeeWellnessDashboard } from "@/lib/modules/employee-wellness-dashboard/services/employee-wellness-dashboard-service";
 import { getBlockchainPayrollVerification } from "@/lib/modules/blockchain-payroll-verification/services/blockchain-payroll-verification-service";
 import { getDynamicOrgChartVisualization } from "@/lib/modules/dynamic-org-chart-visualization/services/dynamic-org-chart-visualization-service";
 import { getAutomatedComplianceMonitoring } from "@/lib/modules/automated-compliance-monitoring/services/automated-compliance-monitoring-service";
@@ -248,6 +250,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const automatedJobPostingIntegration = organizationId
     ? await getAutomatedJobPostingIntegration(supabase, organizationId).catch(() => getDemoAutomatedJobPostingIntegration())
     : getDemoAutomatedJobPostingIntegration();
+  const employeeWellnessDashboard = organizationId
+    ? await getEmployeeWellnessDashboard(supabase, organizationId).catch(() => getDemoEmployeeWellnessDashboard())
+    : getDemoEmployeeWellnessDashboard();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -308,6 +313,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     blockchainPayrollVerification,
     dynamicOrgChartVisualization,
     automatedJobPostingIntegration,
+    employeeWellnessDashboard,
     leaveRequests,
     announcements,
   };

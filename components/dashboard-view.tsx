@@ -8,6 +8,7 @@ import { VoiceAssistantPanel } from "@/components/voice-activated-hr-assistant/v
 import { BlockchainPayrollPanel } from "@/components/blockchain-payroll-verification/blockchain-payroll-panel";
 import { OrgChartPanel } from "@/components/dynamic-org-chart-visualization/org-chart-panel";
 import { JobPostingPanel } from "@/components/automated-job-posting-integration/job-posting-panel";
+import { WellnessDashboardPanel } from "@/components/employee-wellness-dashboard/wellness-dashboard-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -189,6 +190,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <OrgChartPanel orgChart={data.dynamicOrgChartVisualization} />
 
       <JobPostingPanel integration={data.automatedJobPostingIntegration} />
+
+      <WellnessDashboardPanel dashboard={data.employeeWellnessDashboard} />
     </div>
   );
 }

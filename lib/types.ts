@@ -245,6 +245,41 @@ export interface AutomatedJobPostingIntegration {
   postings: JobPosting[];
 }
 
+export interface WellnessMetric {
+  label: string;
+  value: string;
+  detail: string;
+}
+
+export interface WellnessResource {
+  id: string;
+  title: string;
+  category: string;
+  availability: string;
+  description: string;
+}
+
+export interface WellnessSignal {
+  id: string;
+  employeeName: string;
+  focusArea: string;
+  signal: string;
+  recommendation: string;
+}
+
+export interface EmployeeWellnessDashboard {
+  generatedAt: string;
+  summary: {
+    participatingEmployees: number;
+    wellnessResources: number;
+    activeSignals: number;
+    connectedApps: number;
+  };
+  metrics: WellnessMetric[];
+  resources: WellnessResource[];
+  signals: WellnessSignal[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -287,6 +322,7 @@ export interface DashboardData {
   blockchainPayrollVerification: BlockchainPayrollVerification;
   dynamicOrgChartVisualization: DynamicOrgChartVisualization;
   automatedJobPostingIntegration: AutomatedJobPostingIntegration;
+  employeeWellnessDashboard: EmployeeWellnessDashboard;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

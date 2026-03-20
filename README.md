@@ -60,3 +60,68 @@ Deploy to Vercel with the same environment variables from `.env.local`. The proj
 - `vercel.json` with the Next.js framework setting
 
 Run `npm run build` before deployment to verify the production build locally.
+
+## Release Status
+
+The current codebase is implementation-complete for the scoped HR, payroll, compliance, analytics, admin, operations, and self-service features on both backend and frontend.
+
+Verification completed on the current release state:
+
+- `npm run lint`
+- `npm test`
+- `npm run build`
+
+Recent release commits:
+
+- `3a92911` `Add workspace frontend management screens`
+- `e99cb2d` `Polish workspace frontend flows`
+- `c0d349a` `Close frontend workspace parity gaps`
+
+## Feature Coverage
+
+Advanced feature coverage included in the current release:
+
+- `AI-Powered Payroll: Anomaly Detection`
+- `Predictive Workforce Analytics`
+- `Smart Benefits Recommendations`
+- `Automated Compliance Monitoring`
+- `Voice-Activated HR Assistant`
+- `Blockchain Payroll Verification`
+- `Dynamic Org Chart Visualization`
+- `Automated Job Posting Integration`
+- `Employee Wellness Dashboard`
+- `Real-Time Payroll Cost Tracking`
+- `Intelligent Document Processing`
+- `Global Payroll Support`
+- `Advanced Scheduling Engine`
+- `Sentiment Analysis Dashboard`
+- `Custom Workflow Builder`
+
+Frontend workspace coverage includes:
+
+- workforce management screens
+- payroll operations and action flows
+- operations and approvals workflows
+- compliance and reporting views
+- admin configuration views
+- employee self-service profile, paystub, PTO, and voice assistant flows
+
+## Production Smoke Test
+
+Run this after deployment:
+
+1. Confirm environment variables are present and the app boots without falling back to demo mode unexpectedly.
+2. Sign in through `/login` with a real admin account.
+3. Open `/workspace` and verify the main sections load:
+   `workforce`, `payroll`, `operations`, `compliance`, `analytics`, `admin`, `self-service`.
+4. Validate action flows:
+   approvals approve/reject, payroll calculate/approve/finalize, integration sync, direct deposit setup/verify, clock in/out.
+5. Validate self-service flows:
+   profile update, paystub history load, PTO create/edit/delete, voice assistant request handling.
+6. Validate reporting views:
+   payroll, PTO, and workforce reports render with live data.
+7. Confirm role protection and authenticated API access behave correctly in production.
+
+## Final Caveat
+
+This release is code-verified and build-verified, but business-side UAT with production-like data is still recommended before a full rollout.

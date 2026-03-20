@@ -305,6 +305,33 @@ export interface RealTimePayrollCostTracking {
   breakdown: PayrollCostDepartmentBreakdown[];
 }
 
+export interface ProcessedDocumentField {
+  label: string;
+  value: string;
+  confidenceScore: number;
+}
+
+export interface IntelligentDocumentRecord {
+  id: string;
+  documentId: string;
+  fileName: string;
+  category: string;
+  processingStatus: "Queued" | "Processed" | "Needs Review";
+  extractedSummary: string;
+  extractedFields: ProcessedDocumentField[];
+}
+
+export interface IntelligentDocumentProcessing {
+  generatedAt: string;
+  summary: {
+    processedDocuments: number;
+    fieldsExtracted: number;
+    reviewQueue: number;
+    ocrReadyFormats: number;
+  };
+  documents: IntelligentDocumentRecord[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -349,6 +376,7 @@ export interface DashboardData {
   automatedJobPostingIntegration: AutomatedJobPostingIntegration;
   employeeWellnessDashboard: EmployeeWellnessDashboard;
   realTimePayrollCostTracking: RealTimePayrollCostTracking;
+  intelligentDocumentProcessing: IntelligentDocumentProcessing;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

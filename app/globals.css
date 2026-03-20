@@ -766,6 +766,30 @@ th {
   background: rgba(255, 255, 255, 0.62);
 }
 
+.document-processing-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.document-field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.document-field-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(244, 237, 228, 0.8);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+}
+
 .notice {
   display: flex;
   align-items: flex-start;
@@ -925,6 +949,7 @@ th {
   .job-board-grid,
   .wellness-metrics-grid,
   .wellness-grid,
+  .document-field-grid,
   .loading-grid {
     grid-template-columns: 1fr;
   }

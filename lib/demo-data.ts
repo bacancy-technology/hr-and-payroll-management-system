@@ -11,6 +11,7 @@ import type {
   EmployeeWellnessDashboard,
   Employee,
   HiringWindowRecommendation,
+  IntelligentDocumentProcessing,
   LeaveRequest,
   PayrollAnomaly,
   RealTimePayrollCostTracking,
@@ -675,6 +676,100 @@ export function getDemoRealTimePayrollCostTracking(): RealTimePayrollCostTrackin
   };
 }
 
+export function getDemoIntelligentDocumentProcessing(): IntelligentDocumentProcessing {
+  return {
+    generatedAt: "2026-03-20T10:30:00.000Z",
+    summary: {
+      processedDocuments: 3,
+      fieldsExtracted: 10,
+      reviewQueue: 1,
+      ocrReadyFormats: 3,
+    },
+    documents: [
+      {
+        id: "processed-offer-letter",
+        documentId: "document-offer-letter",
+        fileName: "offer-letter.pdf",
+        category: "Offer Letter",
+        processingStatus: "Processed",
+        extractedSummary: "offer-letter.pdf classified for Offer Letter extraction and validation.",
+        extractedFields: [
+          {
+            label: "Document type",
+            value: "Offer Letter",
+            confidenceScore: 0.94,
+          },
+          {
+            label: "Template",
+            value: "Offer Letter",
+            confidenceScore: 0.91,
+          },
+          {
+            label: "Review focus",
+            value: "Compensation and start date terms",
+            confidenceScore: 0.84,
+          },
+        ],
+      },
+      {
+        id: "processed-tax-form",
+        documentId: "document-tax-form",
+        fileName: "w4-tax-form.pdf",
+        category: "Tax Form",
+        processingStatus: "Processed",
+        extractedSummary: "w4-tax-form.pdf classified for Tax Form extraction and validation.",
+        extractedFields: [
+          {
+            label: "Document type",
+            value: "Tax Form",
+            confidenceScore: 0.94,
+          },
+          {
+            label: "Template",
+            value: "Tax Form",
+            confidenceScore: 0.93,
+          },
+          {
+            label: "Review focus",
+            value: "TIN and withholding completeness",
+            confidenceScore: 0.82,
+          },
+        ],
+      },
+      {
+        id: "processed-policy-image",
+        documentId: "document-policy-image",
+        fileName: "policy-acknowledgement.png",
+        category: "Policy",
+        processingStatus: "Needs Review",
+        extractedSummary: "policy-acknowledgement.png classified for Policy extraction and validation.",
+        extractedFields: [
+          {
+            label: "Document type",
+            value: "Policy",
+            confidenceScore: 0.9,
+          },
+          {
+            label: "Template",
+            value: "Policy Document",
+            confidenceScore: 0.9,
+          },
+          {
+            label: "Review focus",
+            value: "Acknowledgement and version tracking",
+            confidenceScore: 0.79,
+          },
+          {
+            label: "File format",
+            value: "image/png",
+            confidenceScore: 0.98,
+          },
+        ],
+      },
+    ],
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -775,6 +870,7 @@ export function getDemoDashboardData(
     automatedJobPostingIntegration: getDemoAutomatedJobPostingIntegration(),
     employeeWellnessDashboard: getDemoEmployeeWellnessDashboard(),
     realTimePayrollCostTracking: getDemoRealTimePayrollCostTracking(),
+    intelligentDocumentProcessing: getDemoIntelligentDocumentProcessing(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

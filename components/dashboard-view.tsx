@@ -10,6 +10,7 @@ import { OrgChartPanel } from "@/components/dynamic-org-chart-visualization/org-
 import { JobPostingPanel } from "@/components/automated-job-posting-integration/job-posting-panel";
 import { WellnessDashboardPanel } from "@/components/employee-wellness-dashboard/wellness-dashboard-panel";
 import { PayrollCostTrackingPanel } from "@/components/real-time-payroll-cost-tracking/payroll-cost-tracking-panel";
+import { IntelligentDocumentProcessingPanel } from "@/components/intelligent-document-processing/intelligent-document-processing-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -195,6 +196,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <WellnessDashboardPanel dashboard={data.employeeWellnessDashboard} />
 
       <PayrollCostTrackingPanel tracking={data.realTimePayrollCostTracking} />
+
+      <IntelligentDocumentProcessingPanel processing={data.intelligentDocumentProcessing} />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   buildSummaryMetrics,
   getDemoDynamicOrgChartVisualization,
   getDemoEmployeeWellnessDashboard,
+  getDemoIntelligentDocumentProcessing,
   getDemoRealTimePayrollCostTracking,
   getDemoPredictiveWorkforceAnalytics,
   getDemoSmartBenefitsRecommendations,
@@ -15,6 +16,7 @@ import {
 } from "@/lib/demo-data";
 import { getAutomatedJobPostingIntegration } from "@/lib/modules/automated-job-posting-integration/services/automated-job-posting-integration-service";
 import { getEmployeeWellnessDashboard } from "@/lib/modules/employee-wellness-dashboard/services/employee-wellness-dashboard-service";
+import { getIntelligentDocumentProcessing } from "@/lib/modules/intelligent-document-processing/services/intelligent-document-processing-service";
 import { getRealTimePayrollCostTracking } from "@/lib/modules/real-time-payroll-cost-tracking/services/real-time-payroll-cost-tracking-service";
 import { getBlockchainPayrollVerification } from "@/lib/modules/blockchain-payroll-verification/services/blockchain-payroll-verification-service";
 import { getDynamicOrgChartVisualization } from "@/lib/modules/dynamic-org-chart-visualization/services/dynamic-org-chart-visualization-service";
@@ -258,6 +260,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const realTimePayrollCostTracking = organizationId
     ? await getRealTimePayrollCostTracking(supabase, organizationId).catch(() => getDemoRealTimePayrollCostTracking())
     : getDemoRealTimePayrollCostTracking();
+  const intelligentDocumentProcessing = organizationId
+    ? await getIntelligentDocumentProcessing(supabase, organizationId).catch(() => getDemoIntelligentDocumentProcessing())
+    : getDemoIntelligentDocumentProcessing();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -320,6 +325,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     automatedJobPostingIntegration,
     employeeWellnessDashboard,
     realTimePayrollCostTracking,
+    intelligentDocumentProcessing,
     leaveRequests,
     announcements,
   };

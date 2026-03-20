@@ -20,6 +20,16 @@ interface WebhookEventInput {
   errorMessage?: string | null;
 }
 
+interface WebhookEventUpdateInput {
+  integrationId?: string | null;
+  eventType?: string;
+  deliveryStatus?: string;
+  externalEventId?: string | null;
+  payload?: JsonRecord;
+  processedAt?: string | null;
+  errorMessage?: string | null;
+}
+
 interface WebhookEventRow {
   id: string;
   integration_id: string | null;
@@ -83,6 +93,20 @@ function normalizeWebhookEvent(row: WebhookEventRow) {
   };
 }
 
+function buildWebhookEventUpdatePayload(input: WebhookEventUpdateInput) {
+  return Object.fromEntries(
+    Object.entries({
+      integration_id: input.integrationId,
+      event_type: input.eventType,
+      delivery_status: input.deliveryStatus,
+      external_event_id: input.externalEventId,
+      payload: input.payload,
+      processed_at: input.processedAt,
+      error_message: input.errorMessage,
+    }).filter(([, value]) => value !== undefined),
+  );
+}
+
 export async function listWebhookEvents(
   supabase: AuthenticatedSupabaseClient,
   organizationId: string,
@@ -113,6 +137,31 @@ export async function listWebhookEvents(
   }
 
   return ((data as WebhookEventRow[] | null) ?? []).map((row) => normalizeWebhookEvent(row));
+}
+
+export async function getWebhookEventById(
+  supabase: AuthenticatedSupabaseClient,
+  organizationId: string,
+  provider: string,
+  eventId: string,
+) {
+  const { data, error } = await supabase
+    .from("webhook_events")
+    .select(WEBHOOK_EVENT_SELECT)
+    .eq("organization_id", organizationId)
+    .eq("provider", provider)
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (error) {
+    throw new ApiError(500, "Failed to load the webhook event.", error.message);
+  }
+
+  if (!data) {
+    throw new ApiError(404, "Webhook event not found.");
+  }
+
+  return normalizeWebhookEvent(data as WebhookEventRow);
 }
 
 export async function createWebhookEvent(
@@ -150,6 +199,49 @@ export async function createWebhookEvent(
 
   if (!data) {
     throw new ApiError(500, "Webhook event creation did not return a record.");
+  }
+
+  return normalizeWebhookEvent(data as WebhookEventRow);
+}
+
+export async function updateWebhookEvent(
+  supabase: AuthenticatedSupabaseClient,
+  organizationId: string,
+  provider: string,
+  eventId: string,
+  input: WebhookEventUpdateInput,
+) {
+  let integrationId = input.integrationId;
+
+  if (integrationId) {
+    const integration = await getIntegrationSummaryInOrganization(supabase, organizationId, integrationId);
+    integrationId = integration.id;
+  }
+
+  const payload = buildWebhookEventUpdatePayload({
+    ...input,
+    integrationId,
+  });
+
+  if (Object.keys(payload).length === 0) {
+    throw new ApiError(400, "At least one webhook event field must be provided.");
+  }
+
+  const { data, error } = await supabase
+    .from("webhook_events")
+    .update(payload)
+    .eq("organization_id", organizationId)
+    .eq("provider", provider)
+    .eq("id", eventId)
+    .select(WEBHOOK_EVENT_SELECT)
+    .maybeSingle();
+
+  if (error) {
+    throw new ApiError(500, "Failed to update the webhook event.", error.message);
+  }
+
+  if (!data) {
+    throw new ApiError(404, "Webhook event not found.");
   }
 
   return normalizeWebhookEvent(data as WebhookEventRow);

@@ -1,6 +1,9 @@
-import { runIntegrationSync } from "@/lib/modules/integrations/services/integration-sync-service";
+import {
+  listIntegrationSyncRuns,
+  runIntegrationSync,
+} from "@/lib/modules/integrations/services/integration-sync-service";
 import { requireApiContext } from "@/lib/modules/shared/api/context";
-import { created, handleRouteError } from "@/lib/modules/shared/api/http";
+import { created, handleRouteError, ok } from "@/lib/modules/shared/api/http";
 import {
   readJsonBody,
   readOptionalNumber,
@@ -11,6 +14,27 @@ interface IntegrationSyncRouteProps {
   params: Promise<{
     integrationId: string;
   }>;
+}
+
+export async function GET(request: Request, { params }: IntegrationSyncRouteProps) {
+  try {
+    const { integrationId } = await params;
+    const { supabase, organizationId } = await requireApiContext();
+    const url = new URL(request.url);
+
+    return ok(
+      await listIntegrationSyncRuns(supabase, organizationId, {
+        integrationId,
+        status: readOptionalString({ status: url.searchParams.get("status") }, "status"),
+        triggerSource: readOptionalString(
+          { triggerSource: url.searchParams.get("triggerSource") },
+          "triggerSource",
+        ),
+      }),
+    );
+  } catch (error) {
+    return handleRouteError(error);
+  }
 }
 
 export async function POST(request: Request, { params }: IntegrationSyncRouteProps) {

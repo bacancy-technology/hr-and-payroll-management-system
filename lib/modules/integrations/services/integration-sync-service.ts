@@ -2,6 +2,12 @@ import type { AuthenticatedSupabaseClient } from "@/lib/modules/shared/api/conte
 import { ApiError } from "@/lib/modules/shared/api/errors";
 import { getIntegrationSummaryInOrganization } from "@/lib/modules/shared/services/org-reference-service";
 
+interface IntegrationSyncFilters {
+  integrationId?: string;
+  status?: string;
+  triggerSource?: string;
+}
+
 interface IntegrationSyncRow {
   id: string;
   integration_id: string;
@@ -63,6 +69,38 @@ function normalizeIntegrationSync(row: IntegrationSyncRow) {
     createdAt: row.created_at,
     integration: normalizeRelation(row.integrations),
   };
+}
+
+export async function listIntegrationSyncRuns(
+  supabase: AuthenticatedSupabaseClient,
+  organizationId: string,
+  filters: IntegrationSyncFilters = {},
+) {
+  let query = supabase
+    .from("integration_sync_runs")
+    .select(INTEGRATION_SYNC_SELECT)
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false });
+
+  if (filters.integrationId) {
+    query = query.eq("integration_id", filters.integrationId);
+  }
+
+  if (filters.status) {
+    query = query.eq("status", filters.status);
+  }
+
+  if (filters.triggerSource) {
+    query = query.eq("trigger_source", filters.triggerSource);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new ApiError(500, "Failed to load integration sync runs.", error.message);
+  }
+
+  return ((data as IntegrationSyncRow[] | null) ?? []).map((row) => normalizeIntegrationSync(row));
 }
 
 export async function runIntegrationSync(

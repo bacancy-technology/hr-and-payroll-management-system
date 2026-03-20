@@ -1,5 +1,7 @@
 import type { AuthenticatedSupabaseClient } from "@/lib/modules/shared/api/context";
 import { ApiError } from "@/lib/modules/shared/api/errors";
+import { listIntegrationSyncRuns } from "@/lib/modules/integrations/services/integration-sync-service";
+import { listWebhookEvents } from "@/lib/modules/integrations/services/webhook-event-service";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -138,7 +140,16 @@ export async function getIntegrationById(
     throw new ApiError(404, "Integration not found.");
   }
 
-  return normalizeIntegration(data as IntegrationRow);
+  const [syncRuns, webhookEvents] = await Promise.all([
+    listIntegrationSyncRuns(supabase, organizationId, { integrationId }),
+    listWebhookEvents(supabase, organizationId, { integrationId }),
+  ]);
+
+  return {
+    ...normalizeIntegration(data as IntegrationRow),
+    syncRuns,
+    webhookEvents,
+  };
 }
 
 export async function createIntegration(

@@ -15,6 +15,7 @@ import type {
   SmartBenefitsRecommendations,
   SummaryMetric,
   UserProfile,
+  VoiceActivatedHrAssistant,
 } from "@/lib/types";
 import seedContent from "@/supabase/seed-data.json";
 import { formatCurrency, initialsFromName } from "@/lib/utils";
@@ -286,6 +287,37 @@ export function getDemoAutomatedComplianceMonitoring(): AutomatedComplianceMonit
   };
 }
 
+export function getDemoVoiceActivatedHrAssistant(): VoiceActivatedHrAssistant {
+  return {
+    generatedAt: "2026-03-20T09:15:00.000Z",
+    summary: {
+      supportedCommands: 4,
+      automationReadyActions: 3,
+    },
+    sampleCommands: [
+      {
+        prompt: "What is my PTO balance this quarter?",
+        intent: "pto_balance",
+      },
+      {
+        prompt: "Submit 2 days of PTO for April 10 to April 11 for vacation.",
+        intent: "submit_pto_request",
+      },
+      {
+        prompt: "Summarize my latest payroll information.",
+        intent: "payroll_summary",
+      },
+    ],
+    recentResult: {
+      id: "voice-preview-default",
+      transcript: "What is my PTO balance this quarter?",
+      intent: "pto_balance",
+      response: "You currently have 6 approved PTO days scheduled and 1 pending PTO request.",
+      actionTaken: "Prepared demo self-service preview.",
+    },
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -380,6 +412,7 @@ export function getDemoDashboardData(
     predictiveWorkforceAnalytics: getDemoPredictiveWorkforceAnalytics(),
     smartBenefitsRecommendations: getDemoSmartBenefitsRecommendations(),
     automatedComplianceMonitoring: getDemoAutomatedComplianceMonitoring(),
+    voiceActivatedHrAssistant: getDemoVoiceActivatedHrAssistant(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

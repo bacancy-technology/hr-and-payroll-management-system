@@ -6,12 +6,14 @@ import {
   buildSummaryMetrics,
   getDemoPredictiveWorkforceAnalytics,
   getDemoSmartBenefitsRecommendations,
+  getDemoVoiceActivatedHrAssistant,
 } from "@/lib/demo-data";
 import { getAutomatedComplianceMonitoring } from "@/lib/modules/automated-compliance-monitoring/services/automated-compliance-monitoring-service";
 import { env } from "@/lib/env";
 import { listPayrollAnomalies } from "@/lib/modules/payroll-anomaly-detection/services/payroll-anomaly-detection-service";
 import { getPredictiveWorkforceAnalytics } from "@/lib/modules/predictive-workforce-analytics/services/predictive-workforce-analytics-service";
 import { getSmartBenefitsRecommendations } from "@/lib/modules/smart-benefits-recommendations/services/smart-benefits-recommendations-service";
+import { getVoiceActivatedHrAssistantPreview } from "@/lib/modules/voice-activated-hr-assistant/services/voice-activated-hr-assistant-service";
 import { createServerClient } from "@/lib/supabase/server";
 import type { DashboardData, Employee, LeaveRequest, PayrollRun, UserProfile } from "@/lib/types";
 import { initialsFromName } from "@/lib/utils";
@@ -228,6 +230,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const automatedComplianceMonitoring = organizationId
     ? await getAutomatedComplianceMonitoring(supabase, organizationId).catch(() => getDemoAutomatedComplianceMonitoring())
     : getDemoAutomatedComplianceMonitoring();
+  const voiceActivatedHrAssistant = organizationId
+    ? await getVoiceActivatedHrAssistantPreview(supabase, organizationId, user.id).catch(() => getDemoVoiceActivatedHrAssistant())
+    : getDemoVoiceActivatedHrAssistant();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -284,6 +289,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     predictiveWorkforceAnalytics,
     smartBenefitsRecommendations,
     automatedComplianceMonitoring,
+    voiceActivatedHrAssistant,
     leaveRequests,
     announcements,
   };

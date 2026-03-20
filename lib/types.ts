@@ -138,6 +138,29 @@ export interface AutomatedComplianceMonitoring {
   signals: ComplianceMonitoringSignal[];
 }
 
+export interface VoiceAssistantSampleCommand {
+  prompt: string;
+  intent: string;
+}
+
+export interface VoiceAssistantCommandResult {
+  id: string;
+  transcript: string;
+  intent: "pto_balance" | "submit_pto_request" | "payroll_summary" | "help";
+  response: string;
+  actionTaken: string;
+}
+
+export interface VoiceActivatedHrAssistant {
+  generatedAt: string;
+  summary: {
+    supportedCommands: number;
+    automationReadyActions: number;
+  };
+  sampleCommands: VoiceAssistantSampleCommand[];
+  recentResult: VoiceAssistantCommandResult;
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -176,6 +199,7 @@ export interface DashboardData {
   predictiveWorkforceAnalytics: PredictiveWorkforceAnalytics;
   smartBenefitsRecommendations: SmartBenefitsRecommendations;
   automatedComplianceMonitoring: AutomatedComplianceMonitoring;
+  voiceActivatedHrAssistant: VoiceActivatedHrAssistant;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

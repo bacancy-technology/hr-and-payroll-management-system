@@ -4,6 +4,7 @@ import { PayrollAnomalyPanel } from "@/components/payroll-anomaly-detection/payr
 import { PredictiveWorkforcePanel } from "@/components/predictive-workforce-analytics/predictive-workforce-panel";
 import { BenefitsRecommendationsPanel } from "@/components/smart-benefits-recommendations/benefits-recommendations-panel";
 import { ComplianceMonitoringPanel } from "@/components/automated-compliance-monitoring/compliance-monitoring-panel";
+import { VoiceAssistantPanel } from "@/components/voice-activated-hr-assistant/voice-assistant-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -177,6 +178,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <BenefitsRecommendationsPanel recommendations={data.smartBenefitsRecommendations} />
 
       <ComplianceMonitoringPanel monitoring={data.automatedComplianceMonitoring} />
+
+      <VoiceAssistantPanel assistant={data.voiceActivatedHrAssistant} />
     </div>
   );
 }

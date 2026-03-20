@@ -19,7 +19,10 @@ export function SiteHeader({ profile }: SiteHeaderProps) {
         <Link className="nav-link" href="/#platform">
           Platform
         </Link>
-        <Link className="nav-link" href="/#workspace">
+        <Link className="nav-link" href="/dashboard">
+          Dashboard
+        </Link>
+        <Link className="nav-link" href="/workspace">
           Workspace
         </Link>
         <Link className="nav-link" href="/#deploy">
@@ -39,7 +42,7 @@ export function SiteHeader({ profile }: SiteHeaderProps) {
                 </span>
               </span>
             </div>
-            <Link className="button-ghost" href="/dashboard">
+            <Link className="button-ghost" href="/workspace">
               Open workspace
             </Link>
             <form action={signOut}>
@@ -52,6 +55,9 @@ export function SiteHeader({ profile }: SiteHeaderProps) {
           <>
             <Link className="button-ghost" href="/dashboard">
               Demo workspace
+            </Link>
+            <Link className="button-secondary" href="/workspace">
+              Admin workspace
             </Link>
             <Link className="button" href="/login">
               Sign in

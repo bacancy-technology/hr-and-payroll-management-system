@@ -876,6 +876,113 @@ th {
   background: rgba(201, 104, 85, 0.16);
 }
 
+.workspace-shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.workspace-sidebar {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-card);
+}
+
+.workspace-sidebar-top {
+  display: grid;
+  gap: 6px;
+}
+
+.workspace-nav {
+  display: grid;
+  gap: 8px;
+}
+
+.workspace-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  text-decoration: none;
+  background: rgba(244, 237, 228, 0.65);
+  border: 1px solid rgba(23, 33, 43, 0.06);
+}
+
+.workspace-nav-link-active {
+  background: rgba(13, 122, 115, 0.1);
+  border-color: rgba(13, 122, 115, 0.2);
+  color: var(--accent);
+}
+
+.workspace-content {
+  display: grid;
+  gap: 20px;
+}
+
+.workspace-page-header {
+  display: grid;
+  gap: 8px;
+}
+
+.workspace-page-header h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.02;
+}
+
+.workspace-link-grid,
+.workspace-section-grid,
+.workspace-card-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.workspace-link-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.workspace-section-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workspace-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.workspace-link-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+.workspace-inline-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.workspace-panel-message {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(244, 237, 228, 0.75);
+}
+
+.workspace-panel-message-error {
+  background: rgba(201, 104, 85, 0.12);
+  color: #8d3325;
+}
+
 .sentiment-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1119,6 +1226,9 @@ th {
   .ledger-hash-grid,
   .org-chart-grid,
   .job-board-grid,
+  .workspace-link-grid,
+  .workspace-section-grid,
+  .workspace-card-grid,
   .wellness-metrics-grid,
   .wellness-grid,
   .document-field-grid,
@@ -1129,6 +1239,14 @@ th {
   .workflow-builder-grid,
   .loading-grid {
     grid-template-columns: 1fr;
+  }
+
+  .workspace-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-sidebar {
+    position: static;
   }
 
   .hero-meta,

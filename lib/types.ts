@@ -114,6 +114,30 @@ export interface SmartBenefitsRecommendations {
   recommendations: BenefitsRecommendation[];
 }
 
+export interface ComplianceMonitoringSignal {
+  id: string;
+  ruleId: string;
+  ruleName: string;
+  jurisdiction: string;
+  category: string;
+  monitoringStatus: "Stable" | "Watch" | "Action Required";
+  impactLevel: "Low" | "Medium" | "High";
+  recommendedPolicyUpdate: string;
+  impactAssessment: string;
+  dueDate: string;
+}
+
+export interface AutomatedComplianceMonitoring {
+  generatedAt: string;
+  summary: {
+    monitoredRules: number;
+    actionRequiredSignals: number;
+    upcomingDeadlines: number;
+    jurisdictionsImpacted: number;
+  };
+  signals: ComplianceMonitoringSignal[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -151,6 +175,7 @@ export interface DashboardData {
   payrollAnomalies: PayrollAnomaly[];
   predictiveWorkforceAnalytics: PredictiveWorkforceAnalytics;
   smartBenefitsRecommendations: SmartBenefitsRecommendations;
+  automatedComplianceMonitoring: AutomatedComplianceMonitoring;
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

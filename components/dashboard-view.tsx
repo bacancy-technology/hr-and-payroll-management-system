@@ -3,6 +3,7 @@ import { formatCurrency, formatDate, toStatusClass } from "@/lib/utils";
 import { PayrollAnomalyPanel } from "@/components/payroll-anomaly-detection/payroll-anomaly-panel";
 import { PredictiveWorkforcePanel } from "@/components/predictive-workforce-analytics/predictive-workforce-panel";
 import { BenefitsRecommendationsPanel } from "@/components/smart-benefits-recommendations/benefits-recommendations-panel";
+import { ComplianceMonitoringPanel } from "@/components/automated-compliance-monitoring/compliance-monitoring-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -174,6 +175,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
       <PredictiveWorkforcePanel analytics={data.predictiveWorkforceAnalytics} />
 
       <BenefitsRecommendationsPanel recommendations={data.smartBenefitsRecommendations} />
+
+      <ComplianceMonitoringPanel monitoring={data.automatedComplianceMonitoring} />
     </div>
   );
 }

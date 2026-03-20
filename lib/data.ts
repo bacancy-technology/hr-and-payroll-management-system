@@ -2,10 +2,12 @@ import { redirect } from "next/navigation";
 
 import {
   getDemoDashboardData,
+  getDemoAutomatedComplianceMonitoring,
   buildSummaryMetrics,
   getDemoPredictiveWorkforceAnalytics,
   getDemoSmartBenefitsRecommendations,
 } from "@/lib/demo-data";
+import { getAutomatedComplianceMonitoring } from "@/lib/modules/automated-compliance-monitoring/services/automated-compliance-monitoring-service";
 import { env } from "@/lib/env";
 import { listPayrollAnomalies } from "@/lib/modules/payroll-anomaly-detection/services/payroll-anomaly-detection-service";
 import { getPredictiveWorkforceAnalytics } from "@/lib/modules/predictive-workforce-analytics/services/predictive-workforce-analytics-service";
@@ -223,6 +225,9 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
   const smartBenefitsRecommendations = organizationId
     ? await getSmartBenefitsRecommendations(supabase, organizationId).catch(() => getDemoSmartBenefitsRecommendations())
     : getDemoSmartBenefitsRecommendations();
+  const automatedComplianceMonitoring = organizationId
+    ? await getAutomatedComplianceMonitoring(supabase, organizationId).catch(() => getDemoAutomatedComplianceMonitoring())
+    : getDemoAutomatedComplianceMonitoring();
 
   const queryFailed =
     Boolean(profileResult.error) ||
@@ -278,6 +283,7 @@ export async function getDashboardData(options: DashboardOptions = {}): Promise<
     payrollAnomalies,
     predictiveWorkforceAnalytics,
     smartBenefitsRecommendations,
+    automatedComplianceMonitoring,
     leaveRequests,
     announcements,
   };

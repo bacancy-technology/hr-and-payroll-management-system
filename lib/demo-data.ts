@@ -1,6 +1,8 @@
 import type {
   Announcement,
+  AutomatedComplianceMonitoring,
   BenefitsRecommendation,
+  ComplianceMonitoringSignal,
   CompensationBenchmarkInsight,
   DashboardData,
   Employee,
@@ -238,6 +240,52 @@ export function getDemoSmartBenefitsRecommendations(): SmartBenefitsRecommendati
   };
 }
 
+const demoComplianceMonitoringSignals: ComplianceMonitoringSignal[] = [
+  {
+    id: "compliance-signal-federal-941",
+    ruleId: "compliance-rule-federal-941-q1",
+    ruleName: "Federal Form 941 Q1 Filing",
+    jurisdiction: "United States - Federal",
+    category: "Payroll Tax",
+    monitoringStatus: "Action Required",
+    impactLevel: "High",
+    recommendedPolicyUpdate:
+      "Refresh filing checklist, reconciliation controls, and reviewer sign-off steps.",
+    impactAssessment:
+      "Missed action could delay payroll filings or create immediate audit exposure for the affected jurisdiction.",
+    dueDate: "2026-04-30",
+  },
+  {
+    id: "compliance-signal-ca-ui",
+    ruleId: "compliance-rule-state-ca-ui-q1",
+    ruleName: "California UI Wage Report",
+    jurisdiction: "California",
+    category: "State Payroll Tax",
+    monitoringStatus: "Watch",
+    impactLevel: "Medium",
+    recommendedPolicyUpdate:
+      "Update state-specific wage validation workflow and employee record audit checkpoints.",
+    impactAssessment:
+      "Operational delay is likely unless filings, wage validation, and reviewer handoffs are completed on time.",
+    dueDate: "2026-04-30",
+  },
+];
+
+export function getDemoAutomatedComplianceMonitoring(): AutomatedComplianceMonitoring {
+  return {
+    generatedAt: "2026-03-20T09:00:00.000Z",
+    summary: {
+      monitoredRules: demoComplianceMonitoringSignals.length,
+      actionRequiredSignals: demoComplianceMonitoringSignals.filter(
+        (signal) => signal.monitoringStatus === "Action Required",
+      ).length,
+      upcomingDeadlines: 2,
+      jurisdictionsImpacted: 2,
+    },
+    signals: demoComplianceMonitoringSignals.map((signal) => ({ ...signal })),
+  };
+}
+
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
   employeeName: request.employeeName,
@@ -331,6 +379,7 @@ export function getDemoDashboardData(
     })),
     predictiveWorkforceAnalytics: getDemoPredictiveWorkforceAnalytics(),
     smartBenefitsRecommendations: getDemoSmartBenefitsRecommendations(),
+    automatedComplianceMonitoring: getDemoAutomatedComplianceMonitoring(),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

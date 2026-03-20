@@ -1,5 +1,6 @@
 import type { DashboardData } from "@/lib/types";
 import { formatCurrency, formatDate, toStatusClass } from "@/lib/utils";
+import { PayrollAnomalyPanel } from "@/components/payroll-anomaly-detection/payroll-anomaly-panel";
 
 interface DashboardViewProps {
   data: DashboardData;
@@ -106,6 +107,8 @@ export function DashboardView({ data, preview = false }: DashboardViewProps) {
               ))}
             </div>
           </article>
+
+          <PayrollAnomalyPanel anomalies={data.payrollAnomalies} />
 
           <article className="panel">
             <div className="panel-top">

@@ -29,6 +29,28 @@ export interface PayrollRun {
   varianceNote: string;
 }
 
+export interface PayrollAnomalyMetric {
+  label: string;
+  observed: number;
+  expected: number;
+  deltaPercent: number;
+}
+
+export interface PayrollAnomaly {
+  id: string;
+  payrollRunId: string;
+  payrollRunLabel: string;
+  payDate: string;
+  category: string;
+  severity: "Low" | "Medium" | "High";
+  confidenceScore: number;
+  subject: string;
+  summary: string;
+  detail: string;
+  recommendedAction: string;
+  metrics: PayrollAnomalyMetric[];
+}
+
 export interface LeaveRequest {
   id: string;
   employeeName: string;
@@ -63,6 +85,7 @@ export interface DashboardData {
   summary: SummaryMetric[];
   employees: Employee[];
   payrollRuns: PayrollRun[];
+  payrollAnomalies: PayrollAnomaly[];
   leaveRequests: LeaveRequest[];
   announcements: Announcement[];
 }

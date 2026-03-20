@@ -3,6 +3,7 @@ import type {
   DashboardData,
   Employee,
   LeaveRequest,
+  PayrollAnomaly,
   PayrollRun,
   SummaryMetric,
   UserProfile,
@@ -32,6 +33,51 @@ const demoPayrollRuns: PayrollRun[] = seedContent.payrollRuns.map((run) => ({
   totalAmount: run.totalAmount,
   varianceNote: run.varianceNote,
 }));
+
+const demoPayrollAnomalies: PayrollAnomaly[] = [
+  {
+    id: "anomaly-payroll-run-2026-03-total",
+    payrollRunId: "payroll-run-2026-03",
+    payrollRunLabel: "March 2026",
+    payDate: "2026-03-29",
+    category: "Run variance",
+    severity: "Medium",
+    confidenceScore: 0.82,
+    subject: "March 2026",
+    summary: "Total payroll is above the recent baseline by 8.5%.",
+    detail: "The March cycle includes a larger than normal movement in total payroll compared with the previous two completed runs.",
+    recommendedAction: "Review off-cycle bonuses, starter proration, and reimbursement imports before approving the run.",
+    metrics: [
+      {
+        label: "Total payroll",
+        observed: 412840,
+        expected: 380560,
+        deltaPercent: 8.5,
+      },
+    ],
+  },
+  {
+    id: "anomaly-priya-tax-rate",
+    payrollRunId: "payroll-run-2026-03",
+    payrollRunLabel: "March 2026",
+    payDate: "2026-03-29",
+    category: "Tax withholding drift",
+    severity: "High",
+    confidenceScore: 0.9,
+    subject: "Priya Nair",
+    summary: "Priya Nair tax withholding rate diverges from the run average by 31.4%.",
+    detail: "The calculated withholding rate is materially above the current run average for comparable payroll items.",
+    recommendedAction: "Confirm withholding profile changes and any manual override applied during payroll preparation.",
+    metrics: [
+      {
+        label: "Tax rate",
+        observed: 20,
+        expected: 15.2,
+        deltaPercent: 31.4,
+      },
+    ],
+  },
+];
 
 const demoLeaveRequests: LeaveRequest[] = seedContent.leaveRequests.map((request) => ({
   id: request.seedKey,
@@ -120,6 +166,10 @@ export function getDemoDashboardData(
     summary: buildSummaryMetrics(demoEmployees, demoPayrollRuns, demoLeaveRequests),
     employees: demoEmployees.map((employee) => ({ ...employee })),
     payrollRuns: demoPayrollRuns.map((run) => ({ ...run })),
+    payrollAnomalies: demoPayrollAnomalies.map((anomaly) => ({
+      ...anomaly,
+      metrics: anomaly.metrics.map((metric) => ({ ...metric })),
+    })),
     leaveRequests: demoLeaveRequests.map((request) => ({ ...request })),
     announcements: demoAnnouncements.map((item) => ({ ...item })),
   };

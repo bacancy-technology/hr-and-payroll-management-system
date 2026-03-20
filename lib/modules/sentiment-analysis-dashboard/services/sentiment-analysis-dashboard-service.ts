@@ -4,6 +4,7 @@ import type {
   SentimentTheme,
 } from "@/lib/types";
 import type { AuthenticatedSupabaseClient } from "@/lib/modules/shared/api/context";
+import { ApiError } from "@/lib/modules/shared/api/errors";
 
 import { listApprovals } from "@/lib/modules/approvals/services/approval-service";
 import { listPerformanceReviews } from "@/lib/modules/performance/services/performance-review-service";
@@ -83,13 +84,12 @@ function buildSignal(raw: RawSentimentSignal): SentimentSignal {
   };
 }
 
-export function buildSentimentAnalysisDashboard(input: {
+function buildRawSentimentSignals(input: {
   announcements: AnnouncementRow[];
   approvals: Awaited<ReturnType<typeof listApprovals>>;
   performanceReviews: Awaited<ReturnType<typeof listPerformanceReviews>>;
-  generatedAt?: string;
 }) {
-  const rawSignals: RawSentimentSignal[] = [
+  return [
     ...input.announcements.map((announcement) => ({
       id: `announcement-${announcement.id}`,
       source: "Announcement",
@@ -121,13 +121,11 @@ export function buildSentimentAnalysisDashboard(input: {
         (approval.status === "Approved" ? 1 : 0) +
         (approval.status === "Rejected" ? -1 : 0),
     })),
-  ];
+  ] satisfies RawSentimentSignal[];
+}
 
-  const signals = rawSignals
-    .map((signal) => buildSignal(signal))
-    .sort((left, right) => left.topic.localeCompare(right.topic) || left.subject.localeCompare(right.subject));
-
-  const themes = Object.entries(
+function buildThemes(signals: SentimentSignal[]) {
+  return Object.entries(
     signals.reduce<Record<string, { count: number; total: number }>>((accumulator, signal) => {
       const current = accumulator[signal.topic] ?? { count: 0, total: 0 };
 
@@ -159,6 +157,21 @@ export function buildSentimentAnalysisDashboard(input: {
       } satisfies SentimentTheme;
     })
     .sort((left, right) => right.signalCount - left.signalCount);
+}
+
+export function buildSentimentAnalysisDashboard(input: {
+  announcements: AnnouncementRow[];
+  approvals: Awaited<ReturnType<typeof listApprovals>>;
+  performanceReviews: Awaited<ReturnType<typeof listPerformanceReviews>>;
+  generatedAt?: string;
+}) {
+  const rawSignals = buildRawSentimentSignals(input);
+
+  const signals = rawSignals
+    .map((signal) => buildSignal(signal))
+    .sort((left, right) => left.topic.localeCompare(right.topic) || left.subject.localeCompare(right.subject));
+
+  const themes = buildThemes(signals);
 
   return {
     generatedAt: input.generatedAt ?? new Date().toISOString(),
@@ -187,6 +200,10 @@ export async function getSentimentAnalysisDashboard(
     listApprovals(supabase, organizationId),
     listPerformanceReviews(supabase, organizationId),
   ]);
+
+  if (announcementsResult.error) {
+    throw new ApiError(500, "Failed to load announcements for sentiment analysis.", announcementsResult.error.message);
+  }
 
   return buildSentimentAnalysisDashboard({
     announcements: (announcementsResult.data ?? []) as AnnouncementRow[],

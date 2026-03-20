@@ -9,8 +9,43 @@ import { listApprovals } from "@/lib/modules/approvals/services/approval-service
 import { listOnboardingTasks } from "@/lib/modules/onboarding/services/onboarding-task-service";
 import { listOnboardingWorkflows } from "@/lib/modules/onboarding/services/onboarding-workflow-service";
 
-function round(value: number) {
-  return Math.round(value * 100) / 100;
+type ApprovalRecord = Awaited<ReturnType<typeof listApprovals>>[number];
+type OnboardingTaskRecord = Awaited<ReturnType<typeof listOnboardingTasks>>[number];
+
+interface WorkflowBuilderMetrics {
+  pendingOnboardingTasks: OnboardingTaskRecord[];
+  onboardingTaskCountsByCategory: Record<string, number>;
+  leaveApprovals: ApprovalRecord[];
+  expenseApprovals: ApprovalRecord[];
+  pendingLeaveApprovals: number;
+  inReviewLeaveApprovals: number;
+  pendingExpenseApprovals: number;
+  activeOnboardingWorkflows: number;
+}
+
+function buildWorkflowBuilderMetrics(input: {
+  approvals: ApprovalRecord[];
+  onboardingTasks: OnboardingTaskRecord[];
+  onboardingWorkflows: Awaited<ReturnType<typeof listOnboardingWorkflows>>;
+}) {
+  const pendingOnboardingTasks = input.onboardingTasks.filter((task) => task.status !== "Completed");
+  const onboardingTaskCountsByCategory = input.onboardingTasks.reduce<Record<string, number>>((accumulator, task) => {
+    accumulator[task.category] = (accumulator[task.category] ?? 0) + 1;
+    return accumulator;
+  }, {});
+  const leaveApprovals = input.approvals.filter((approval) => approval.entityType === "leave_request");
+  const expenseApprovals = input.approvals.filter((approval) => approval.entityType === "expense");
+
+  return {
+    pendingOnboardingTasks,
+    onboardingTaskCountsByCategory,
+    leaveApprovals,
+    expenseApprovals,
+    pendingLeaveApprovals: leaveApprovals.filter((approval) => approval.status === "Pending").length,
+    inReviewLeaveApprovals: leaveApprovals.filter((approval) => approval.status === "In Review").length,
+    pendingExpenseApprovals: expenseApprovals.filter((approval) => approval.status === "Pending").length,
+    activeOnboardingWorkflows: input.onboardingWorkflows.filter((workflow) => workflow.status !== "Completed").length,
+  } satisfies WorkflowBuilderMetrics;
 }
 
 export function buildCustomWorkflowBuilder(input: {
@@ -19,17 +54,15 @@ export function buildCustomWorkflowBuilder(input: {
   onboardingWorkflows: Awaited<ReturnType<typeof listOnboardingWorkflows>>;
   generatedAt?: string;
 }) {
-  const leaveApprovals = input.approvals.filter((approval) => approval.entityType === "leave_request");
-  const expenseApprovals = input.approvals.filter((approval) => approval.entityType === "expense");
-  const onboardingPendingTasks = input.onboardingTasks.filter((task) => task.status !== "Completed");
+  const metrics = buildWorkflowBuilderMetrics(input);
 
   const templates: WorkflowBuilderTemplate[] = [
     {
       id: "workflow-template-onboarding",
       name: "Employee Onboarding",
       category: "People Ops",
-      status: onboardingPendingTasks.length > 0 ? "Active" : "Draft",
-      automationCoverage: onboardingPendingTasks.length === 0 ? 75 : 67,
+      status: metrics.pendingOnboardingTasks.length > 0 ? "Active" : "Draft",
+      automationCoverage: metrics.pendingOnboardingTasks.length === 0 ? 75 : 67,
       conditionalBranches: 1,
       stepCount: 4,
       summary: "Coordinates provisioning, document collection, and payroll readiness for new hires.",
@@ -38,7 +71,7 @@ export function buildCustomWorkflowBuilder(input: {
       id: "workflow-template-leave",
       name: "Leave Approval",
       category: "Manager Workflow",
-      status: leaveApprovals.some((approval) => approval.status !== "Approved") ? "Needs Review" : "Active",
+      status: metrics.leaveApprovals.some((approval) => approval.status !== "Approved") ? "Needs Review" : "Active",
       automationCoverage: 50,
       conditionalBranches: 1,
       stepCount: 4,
@@ -48,7 +81,7 @@ export function buildCustomWorkflowBuilder(input: {
       id: "workflow-template-expense",
       name: "Expense Reimbursement",
       category: "Finance",
-      status: expenseApprovals.some((approval) => approval.status === "Pending") ? "Active" : "Draft",
+      status: metrics.pendingExpenseApprovals > 0 ? "Active" : "Draft",
       automationCoverage: 75,
       conditionalBranches: 1,
       stepCount: 4,
@@ -74,8 +107,8 @@ export function buildCustomWorkflowBuilder(input: {
       nodeType: "Action",
       owner: "Employee",
       executionMode: "Assisted",
-      status: onboardingPendingTasks.some((task) => task.category === "Documents") ? "Watch" : "Ready",
-      detail: `${input.onboardingTasks.filter((task) => task.category === "Documents").length} document-related task(s) currently modeled.`,
+      status: (metrics.onboardingTaskCountsByCategory.Documents ?? 0) > 0 ? "Watch" : "Ready",
+      detail: `${metrics.onboardingTaskCountsByCategory.Documents ?? 0} document-related task(s) currently modeled.`,
     },
     {
       id: "workflow-node-onboarding-conditional",
@@ -84,7 +117,7 @@ export function buildCustomWorkflowBuilder(input: {
       nodeType: "Condition",
       owner: "Payroll",
       executionMode: "Manual",
-      status: onboardingPendingTasks.some((task) => task.category === "Payroll") ? "Watch" : "Ready",
+      status: (metrics.onboardingTaskCountsByCategory.Payroll ?? 0) > 0 ? "Watch" : "Ready",
       detail: "Branches to payroll validation when tax or banking setup is still pending.",
     },
     {
@@ -94,7 +127,7 @@ export function buildCustomWorkflowBuilder(input: {
       nodeType: "Action",
       owner: "People Ops",
       executionMode: "Automated",
-      status: onboardingPendingTasks.length > 0 ? "Watch" : "Ready",
+      status: metrics.pendingOnboardingTasks.length > 0 ? "Watch" : "Ready",
       detail: "Final status updates can be automated when dependent tasks are complete.",
     },
     {
@@ -114,7 +147,7 @@ export function buildCustomWorkflowBuilder(input: {
       nodeType: "Condition",
       owner: "Manager",
       executionMode: "Assisted",
-      status: leaveApprovals.some((approval) => approval.status === "In Review") ? "Watch" : "Ready",
+      status: metrics.inReviewLeaveApprovals > 0 ? "Watch" : "Ready",
       detail: "Coverage and payroll-close timing can branch the workflow before final approval.",
     },
     {
@@ -124,8 +157,8 @@ export function buildCustomWorkflowBuilder(input: {
       nodeType: "Approval",
       owner: "Manager",
       executionMode: "Manual",
-      status: leaveApprovals.some((approval) => approval.status === "Pending") ? "Blocked" : "Watch",
-      detail: `${leaveApprovals.filter((approval) => approval.status !== "Approved").length} leave approval(s) still require attention.`,
+      status: metrics.pendingLeaveApprovals > 0 ? "Blocked" : "Watch",
+      detail: `${metrics.leaveApprovals.filter((approval) => approval.status !== "Approved").length} leave approval(s) still require attention.`,
     },
     {
       id: "workflow-node-expense-trigger",
@@ -154,8 +187,8 @@ export function buildCustomWorkflowBuilder(input: {
       nodeType: "Approval",
       owner: "Finance",
       executionMode: "Assisted",
-      status: expenseApprovals.some((approval) => approval.status === "Pending") ? "Watch" : "Ready",
-      detail: `${expenseApprovals.filter((approval) => approval.status !== "Approved").length} expense approval(s) remain active.`,
+      status: metrics.pendingExpenseApprovals > 0 ? "Watch" : "Ready",
+      detail: `${metrics.expenseApprovals.filter((approval) => approval.status !== "Approved").length} expense approval(s) remain active.`,
     },
   ];
 
@@ -165,14 +198,9 @@ export function buildCustomWorkflowBuilder(input: {
       templates: templates.length,
       automatedSteps: nodes.filter((node) => node.executionMode === "Automated").length,
       conditionalBranches: nodes.filter((node) => node.nodeType === "Condition").length,
-      activeWorkflows:
-        input.onboardingWorkflows.filter((workflow) => workflow.status !== "Completed").length +
-        input.approvals.filter((approval) => approval.status !== "Approved").length,
+      activeWorkflows: metrics.activeOnboardingWorkflows + input.approvals.filter((approval) => approval.status !== "Approved").length,
     },
-    templates: templates.map((template) => ({
-      ...template,
-      automationCoverage: round(template.automationCoverage),
-    })),
+    templates,
     nodes,
   } satisfies CustomWorkflowBuilder;
 }

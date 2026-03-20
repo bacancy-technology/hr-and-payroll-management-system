@@ -11,6 +11,16 @@ import { listHolidays } from "@/lib/modules/time-tracking/services/holiday-servi
 import { listPayPeriods } from "@/lib/modules/time-tracking/services/pay-period-service";
 import { listTimeEntries } from "@/lib/modules/time-tracking/services/time-entry-service";
 
+type EmployeeRecord = Awaited<ReturnType<typeof listEmployees>>[number];
+type PtoRequestRecord = Awaited<ReturnType<typeof listPtoRequests>>[number];
+type HolidayRecord = Awaited<ReturnType<typeof listHolidays>>[number];
+type TimeEntryRecord = Awaited<ReturnType<typeof listTimeEntries>>[number];
+
+interface EmployeeScheduleInsight {
+  overtimeHours: number;
+  pendingLeave: PtoRequestRecord | null;
+}
+
 function toIsoDate(value: string) {
   return value.slice(0, 10);
 }
@@ -41,10 +51,7 @@ function inferCountry(location: string) {
   return normalized;
 }
 
-function holidayAppliesToEmployee(
-  holiday: Awaited<ReturnType<typeof listHolidays>>[number],
-  employee: Awaited<ReturnType<typeof listEmployees>>[number],
-) {
+function holidayAppliesToEmployee(holiday: HolidayRecord, employee: EmployeeRecord) {
   const appliesTo = holiday.appliesTo.toLowerCase();
   const country = inferCountry(employee.location);
 
@@ -84,7 +91,7 @@ function selectCurrentPayPeriod(payPeriods: Awaited<ReturnType<typeof listPayPer
   );
 }
 
-function inferSkills(employee: Awaited<ReturnType<typeof listEmployees>>[number]) {
+function inferSkills(employee: EmployeeRecord) {
   const signature = `${employee.role} ${employee.department?.name ?? ""}`.toLowerCase();
   const skills = new Set<string>();
 
@@ -116,7 +123,7 @@ function inferSkills(employee: Awaited<ReturnType<typeof listEmployees>>[number]
   return Array.from(skills).slice(0, 2);
 }
 
-function inferShiftWindow(employee: Awaited<ReturnType<typeof listEmployees>>[number], entries: Awaited<ReturnType<typeof listTimeEntries>>) {
+function inferShiftWindow(employee: EmployeeRecord, entries: TimeEntryRecord[]) {
   if (employee.location.toLowerCase() === "remote") {
     return {
       shiftWindow: "10:00-18:00",
@@ -163,11 +170,63 @@ function inferShiftWindow(employee: Awaited<ReturnType<typeof listEmployees>>[nu
   };
 }
 
+function buildEmployeeInsights(
+  employees: EmployeeRecord[],
+  ptoRequests: PtoRequestRecord[],
+  timeEntries: TimeEntryRecord[],
+  horizonStart: string,
+) {
+  const overtimeByEmployeeId = timeEntries.reduce<Record<string, number>>((accumulator, entry) => {
+    const employeeId = entry.employee?.id;
+
+    if (!employeeId) {
+      return accumulator;
+    }
+
+    accumulator[employeeId] = (accumulator[employeeId] ?? 0) + entry.overtimeHours;
+    return accumulator;
+  }, {});
+
+  const pendingLeaveByEmployeeId = ptoRequests.reduce<Record<string, PtoRequestRecord>>((accumulator, request) => {
+    if (!request.employeeId || request.status === "Approved" || request.endDate < horizonStart) {
+      return accumulator;
+    }
+
+    const current = accumulator[request.employeeId];
+
+    if (!current || request.startDate < current.startDate) {
+      accumulator[request.employeeId] = request;
+    }
+
+    return accumulator;
+  }, {});
+
+  return employees.reduce<Record<string, EmployeeScheduleInsight>>((accumulator, employee) => {
+    accumulator[employee.id] = {
+      overtimeHours: overtimeByEmployeeId[employee.id] ?? 0,
+      pendingLeave: pendingLeaveByEmployeeId[employee.id] ?? null,
+    };
+
+    return accumulator;
+  }, {});
+}
+
+function buildBlockedHolidayDatesByEmployee(employees: EmployeeRecord[], holidays: HolidayRecord[]) {
+  return employees.reduce<Record<string, Set<string>>>((accumulator, employee) => {
+    accumulator[employee.id] = new Set(
+      holidays
+        .filter((holiday) => holidayAppliesToEmployee(holiday, employee))
+        .map((holiday) => holiday.holidayDate),
+    );
+
+    return accumulator;
+  }, {});
+}
+
 function buildAlerts(input: {
-  employees: Awaited<ReturnType<typeof listEmployees>>;
-  ptoRequests: Awaited<ReturnType<typeof listPtoRequests>>;
-  holidays: Awaited<ReturnType<typeof listHolidays>>;
-  timeEntries: Awaited<ReturnType<typeof listTimeEntries>>;
+  employees: EmployeeRecord[];
+  holidays: HolidayRecord[];
+  insightsByEmployeeId: Record<string, EmployeeScheduleInsight>;
   generatedAt: string;
 }) {
   const alerts: SchedulingConstraintAlert[] = [];
@@ -196,9 +255,8 @@ function buildAlerts(input: {
       });
     }
 
-    const overtimeHours = input.timeEntries
-      .filter((entry) => entry.employee?.id === employee.id)
-      .reduce((sum, entry) => sum + entry.overtimeHours, 0);
+    const insight = input.insightsByEmployeeId[employee.id];
+    const overtimeHours = insight?.overtimeHours ?? 0;
 
     if (overtimeHours >= 0.75) {
       alerts.push({
@@ -210,11 +268,9 @@ function buildAlerts(input: {
       });
     }
 
-    const pendingLeave = input.ptoRequests.find(
-      (request) => request.employeeId === employee.id && request.status !== "Approved" && request.endDate >= horizonStart,
-    );
+    const pendingLeave = insight?.pendingLeave;
 
-    if (pendingLeave) {
+    if (pendingLeave && pendingLeave.endDate >= horizonStart) {
       alerts.push({
         id: `schedule-alert-pending-leave-${pendingLeave.id}`,
         title: `${employee.fullName} has leave pending review`,
@@ -255,11 +311,12 @@ export function buildAdvancedSchedulingEngine(input: {
 
   const horizonStart = toIsoDate(generatedAt) < currentPeriod.startDate ? currentPeriod.startDate : toIsoDate(generatedAt);
   const workdays = buildWorkdays(horizonStart, currentPeriod.endDate, 5);
+  const insightsByEmployeeId = buildEmployeeInsights(input.employees, input.ptoRequests, input.timeEntries, horizonStart);
+  const blockedHolidayDatesByEmployee = buildBlockedHolidayDatesByEmployee(input.employees, input.holidays);
   const alerts = buildAlerts({
     employees: input.employees,
-    ptoRequests: input.ptoRequests,
     holidays: input.holidays,
-    timeEntries: input.timeEntries,
+    insightsByEmployeeId,
     generatedAt,
   });
 
@@ -273,9 +330,7 @@ export function buildAdvancedSchedulingEngine(input: {
             request.status === "Approved" &&
             overlapsDate(request.startDate, request.endDate, date),
         );
-        const blockedByHoliday = input.holidays.some(
-          (holiday) => holiday.holidayDate === date && holidayAppliesToEmployee(holiday, employee),
-        );
+        const blockedByHoliday = blockedHolidayDatesByEmployee[employee.id]?.has(date) ?? false;
 
         return !hasApprovedLeave && !blockedByHoliday;
       });
@@ -285,15 +340,11 @@ export function buildAdvancedSchedulingEngine(input: {
       }
 
       const shiftProfile = inferShiftWindow(employee, input.timeEntries);
-      const pendingLeaveConflict = input.ptoRequests.some(
-        (request) =>
-          request.employeeId === employee.id &&
-          request.status !== "Approved" &&
-          overlapsDate(request.startDate, request.endDate, availableDate),
+      const insight = insightsByEmployeeId[employee.id];
+      const pendingLeaveConflict = Boolean(
+        insight?.pendingLeave && overlapsDate(insight.pendingLeave.startDate, insight.pendingLeave.endDate, availableDate),
       );
-      const overtimeHours = input.timeEntries
-        .filter((entry) => entry.employee?.id === employee.id)
-        .reduce((sum, entry) => sum + entry.overtimeHours, 0);
+      const overtimeHours = insight?.overtimeHours ?? 0;
       const complianceStatus = pendingLeaveConflict
         ? "Needs Review"
         : overtimeHours >= 0.75 || employee.status === "In Review"
